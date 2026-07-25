@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mon Budget" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Mon Budget</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icon-180.png" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Budget personnel</p>
+        <h1>Mon budget</h1>
+      </div>
+      <button id="installButton" class="icon-button hidden" type="button" aria-label="Installer l’application" title="Installer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+    </header>
+
+    <main>
+      <section class="month-row" aria-label="Sélection du mois">
+        <button id="previousMonth" class="round-button" type="button" aria-label="Mois précédent">‹</button>
+        <button id="monthButton" class="month-button" type="button">
+          <span id="monthLabel">Janvier 2026</span>
+          <small>Toucher pour changer</small>
+        </button>
+        <button id="nextMonth" class="round-button" type="button" aria-label="Mois suivant">›</button>
+        <input id="monthPicker" class="visually-hidden" type="month" />
+      </section>
+
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span>Reste disponible</span>
+          <strong id="remainingAmount">0,00 €</strong>
+          <small id="remainingCaption">après toutes les enveloppes</small>
+        </div>
+        <div class="hero-ring" aria-hidden="true">
+          <svg viewBox="0 0 44 44">
+            <circle class="ring-track" cx="22" cy="22" r="18" />
+            <circle id="ringProgress" class="ring-progress" cx="22" cy="22" r="18" />
+          </svg>
+          <span id="usedPercent">0%</span>
+        </div>
+      </section>
+
+      <section class="income-card">
+        <label for="incomeInput">Revenus du mois</label>
+        <div class="money-input-wrap">
+          <input id="incomeInput" class="money-input" inputmode="decimal" autocomplete="off" aria-label="Revenus du mois" />
+          <span>€</span>
+        </div>
+      </section>
+
+      <section class="section-heading">
+        <div>
+          <p class="eyebrow">Répartition</p>
+          <h2>Enveloppes</h2>
+        </div>
+        <button id="addEnvelope" class="add-button" type="button">＋ Ajouter</button>
+      </section>
+
+      <section id="envelopeList" class="envelope-list" aria-live="polite"></section>
+
+      <section class="summary-card">
+        <div class="summary-title">
+          <div>
+            <p class="eyebrow">Synthèse</p>
+            <h2>Vue d’ensemble</h2>
+          </div>
+          <button id="resetButton" class="text-button danger" type="button">Réinitialiser</button>
+        </div>
+        <dl class="summary-list">
+          <div><dt>Revenus</dt><dd id="summaryIncome">0,00 €</dd></div>
+          <div><dt>Total prévu</dt><dd id="summaryPlanned">0,00 €</dd></div>
+          <div><dt>Total détaillé</dt><dd id="summaryActual">0,00 €</dd></div>
+          <div class="summary-emphasis"><dt>Reste disponible</dt><dd id="summaryRemaining">0,00 €</dd></div>
+        </dl>
+      </section>
+    </main>
+
+    <footer>
+      <span>Version 1.0.3</span>
+      <span>Données enregistrées sur cet appareil</span>
+    </footer>
+  </div>
+
+  <dialog id="envelopeDialog" class="sheet-dialog">
+    <form id="envelopeForm" method="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <button class="text-button" value="cancel" type="submit">Annuler</button>
+        <h2 id="envelopeDialogTitle">Nouvelle enveloppe</h2>
+        <button id="saveEnvelope" class="text-button primary" value="default" type="submit">Enregistrer</button>
+      </div>
+      <input id="editingEnvelopeId" type="hidden" />
+      <label class="field">Nom<input id="envelopeName" required maxlength="40" placeholder="Ex. Livret A" /></label>
+      <label class="field">Description<input id="envelopeSubtitle" maxlength="60" placeholder="Ex. Charges fixes" /></label>
+      <label class="field">Montant prévu<div class="inline-money"><input id="envelopePlanned" required inputmode="decimal" /><span>€</span></div></label>
+      <label class="field">Icône
+        <select id="envelopeIcon">
+          <option value="home">Maison</option><option value="cart">Courses</option><option value="chart">Investissement</option>
+          <option value="person">Personne</option><option value="people">Compte commun</option><option value="safe">Épargne</option>
+        </select>
+      </label>
+      <button id="deleteEnvelope" class="delete-sheet-button hidden" type="button">Supprimer cette enveloppe</button>
+    </form>
+  </dialog>
+
+  <dialog id="entryDialog" class="sheet-dialog">
+    <form id="entryForm" method="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <button class="text-button" value="cancel" type="submit">Annuler</button>
+        <h2 id="entryDialogTitle">Nouvelle ligne</h2>
+        <button class="text-button primary" value="default" type="submit">Enregistrer</button>
+      </div>
+      <input id="editingEntryEnvelopeId" type="hidden" />
+      <input id="editingEntryId" type="hidden" />
+      <label class="field">Libellé<input id="entryLabel" required maxlength="50" placeholder="Ex. Électricité" /></label>
+      <label class="field">Montant<div class="inline-money"><input id="entryAmount" required inputmode="decimal" /><span>€</span></div></label>
+      <button id="deleteEntry" class="delete-sheet-button hidden" type="button">Supprimer cette ligne</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
