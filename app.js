@@ -1,235 +1,288 @@
-const STORAGE_KEY = 'mon-budget-pwa-v1';
-const COLORS = ['#0071e3', '#34c759', '#ff9f0a', '#af52de', '#ff375f', '#5e5ce6'];
-const formatter = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
-const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+'use strict';
 
-const icons = {
-  home: '<svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5.5 9.5V21h13V9.5M9.5 21v-7h5v7"/></svg>',
-  cart: '<svg viewBox="0 0 24 24"><path d="M3 4h2l2.1 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>',
-  chart: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>',
-  person: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
-  people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0M14 15a5.5 5.5 0 0 1 7.5 5"/></svg>',
-  safe: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 9V7m3 5h2m-5 3v2m-3-5H7"/></svg>'
+const VERSION = '1.0.3';
+const STORAGE_KEY = 'mon-budget-data-v1';
+const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+const moneyFormatter = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+
+const ICONS = ['🏠','🛒','📈','👤','👥','🏦','🚗','💡','📱','🎯','💳','🧾'];
+const COLORS = ['#3b82f6','#35c759','#ff9f0a','#af52de','#ff375f','#5e5ce6','#64d2ff','#ffd60a'];
+
+const defaultMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
-function uid() { return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`; }
-function currentMonth() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function parseMoney(value) { return Number(String(value).replace(/\s/g,'').replace(',', '.').replace(/[^0-9.-]/g,'')) || 0; }
-function moneyInput(value) { return Number(value).toFixed(2).replace('.', ','); }
-function monthDate(key) { const [y,m] = key.split('-').map(Number); return new Date(y, m-1, 1); }
-
-const sampleMonth = {
-  income: 2709,
-  envelopes: [
-    { id: uid(), name: 'Livret A', subtitle: 'Charges fixes', planned: 320, icon: 'home', color: COLORS[0], open: true, entries: [
-      {id:uid(),label:'Assurance Auto',amount:86.50},{id:uid(),label:'Électricité',amount:55},{id:uid(),label:'Taxe foncière',amount:110},{id:uid(),label:'Mutuelle',amount:75}
-    ]},
-    { id: uid(), name: 'Boursobank', subtitle: 'Alimentaire & loisirs', planned: 200, icon: 'cart', color: COLORS[1], open: false, entries: [
-      {id:uid(),label:'Nourriture',amount:150},{id:uid(),label:'Sport',amount:25.50},{id:uid(),label:'Activités',amount:40}
-    ]},
-    { id: uid(), name: 'Revolut', subtitle: 'Épargne, crypto & bourse', planned: 500, icon: 'chart', color: COLORS[2], open: false, entries: [
-      {id:uid(),label:'Épargne',amount:200},{id:uid(),label:'Crypto',amount:50},{id:uid(),label:'Bourse',amount:250}
-    ]},
-    { id: uid(), name: 'Alizée Cristel', subtitle: 'Virement', planned: 150, icon: 'person', color: COLORS[3], open: false, entries: [{id:uid(),label:'Virement mensuel',amount:150}]},
-    { id: uid(), name: 'Compte commun', subtitle: 'Dépenses du foyer', planned: 1200, icon: 'people', color: COLORS[4], open: false, entries: [{id:uid(),label:'Versement mensuel',amount:1200}]},
-    { id: uid(), name: 'LEP', subtitle: 'Épargne', planned: 150, icon: 'safe', color: COLORS[5], open: false, entries: [{id:uid(),label:'Versement mensuel',amount:150}]}
-  ]
+const seed = {
+  selectedMonth: defaultMonth(),
+  months: {
+    [defaultMonth()]: {
+      income: 2709,
+      envelopes: [
+        { id: crypto.randomUUID(), name: 'Livret A', description: 'Charges fixes', icon: '🏠', color: '#3b82f6', planned: 320, expenses: [
+          { id: crypto.randomUUID(), label: 'Abonnement YouTube', amount: 6.5 },
+          { id: crypto.randomUUID(), label: 'Péage et stationnement', amount: 8 },
+          { id: crypto.randomUUID(), label: 'Assurance automobile', amount: 63 },
+          { id: crypto.randomUUID(), label: 'Traiteur', amount: 115 },
+          { id: crypto.randomUUID(), label: 'Carburant', amount: 103 },
+          { id: crypto.randomUUID(), label: 'Abonnement ChatGPT', amount: 23 },
+          { id: crypto.randomUUID(), label: 'Abonnement SFR', amount: 8 }
+        ]},
+        { id: crypto.randomUUID(), name: 'Boursobank', description: 'Alimentaire & loisirs', icon: '🛒', color: '#35c759', planned: 200, expenses: [
+          { id: crypto.randomUUID(), label: 'Alimentation + restaurant', amount: 111.5 },
+          { id: crypto.randomUUID(), label: 'Shopping & loisir', amount: 104 }
+        ]},
+        { id: crypto.randomUUID(), name: 'Revolut', description: 'Épargne, crypto & bourse', icon: '📈', color: '#ff9f0a', planned: 500, expenses: [
+          { id: crypto.randomUUID(), label: 'Épargne Rose', amount: 30 },
+          { id: crypto.randomUUID(), label: 'Crypto + Bourse', amount: 470 }
+        ]},
+        { id: crypto.randomUUID(), name: 'Alizée Cristel', description: 'Virement', icon: '👤', color: '#af52de', planned: 150, expenses: [{ id: crypto.randomUUID(), label: 'Pension Rose', amount: 150 }]},
+        { id: crypto.randomUUID(), name: 'Compte commun', description: 'Dépenses du foyer', icon: '👥', color: '#ff375f', planned: 1200, expenses: [{ id: crypto.randomUUID(), label: 'Compte commun', amount: 1200 }]},
+        { id: crypto.randomUUID(), name: 'LEP', description: 'Épargne', icon: '🏦', color: '#5e5ce6', planned: 150, expenses: [{ id: crypto.randomUUID(), label: 'Réserve compte commun', amount: 150 }]}
+      ]
+    }
+  }
 };
 
 let state = loadState();
-let deferredInstallPrompt = null;
+let openEnvelopeId = null;
+let editorContext = null;
 
-const el = id => document.getElementById(id);
-const envelopeList = el('envelopeList');
+const els = {
+  monthLabel: document.querySelector('#monthLabel'),
+  envelopeList: document.querySelector('#envelopeList'),
+  incomeAmount: document.querySelector('#incomeAmount'),
+  plannedAmount: document.querySelector('#plannedAmount'),
+  spentAmount: document.querySelector('#spentAmount'),
+  availableAmount: document.querySelector('#availableAmount'),
+  summaryIncome: document.querySelector('#summaryIncome'),
+  summaryPlanned: document.querySelector('#summaryPlanned'),
+  summarySpent: document.querySelector('#summarySpent'),
+  summaryAvailable: document.querySelector('#summaryAvailable'),
+  summaryStatus: document.querySelector('#summaryStatus'),
+  template: document.querySelector('#envelopeTemplate'),
+  editorDialog: document.querySelector('#editorDialog'),
+  editorForm: document.querySelector('#editorForm'),
+  editorFields: document.querySelector('#editorFields'),
+  dialogTitle: document.querySelector('#dialogTitle'),
+  dialogEyebrow: document.querySelector('#dialogEyebrow'),
+  monthDialog: document.querySelector('#monthDialog'),
+  monthOptions: document.querySelector('#monthOptions')
+};
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved?.months && saved?.selectedMonth) return saved;
-  } catch (_) {}
-  const key = currentMonth();
-  return { selectedMonth: key, months: { [key]: structuredClone(sampleMonth) } };
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (parsed?.months && parsed?.selectedMonth) return parsed;
+  } catch (error) { console.warn('Données locales illisibles', error); }
+  return structuredClone(seed);
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function ensureMonth(key) {
-  if (!state.months[key]) {
-    const previous = state.months[state.selectedMonth];
-    state.months[key] = previous ? { income: previous.income, envelopes: previous.envelopes.map(e => ({...e,id:uid(),open:false,entries:e.entries.map(x=>({...x,id:uid()}))})) } : structuredClone(sampleMonth);
-  }
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-function getMonth() { ensureMonth(state.selectedMonth); return state.months[state.selectedMonth]; }
-function sumEntries(envelope) { return envelope.entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0); }
+
+function currentBudget() {
+  if (!state.months[state.selectedMonth]) state.months[state.selectedMonth] = { income: 0, envelopes: [] };
+  return state.months[state.selectedMonth];
+}
+
+function monthDate(key) {
+  const [year, month] = key.split('-').map(Number);
+  return new Date(year, month - 1, 1);
+}
+
+function money(value) { return moneyFormatter.format(Number(value || 0)); }
+function spent(envelope) { return envelope.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0); }
+function totals() {
+  const budget = currentBudget();
+  const planned = budget.envelopes.reduce((sum, e) => sum + Number(e.planned || 0), 0);
+  const actual = budget.envelopes.reduce((sum, e) => sum + spent(e), 0);
+  return { income: Number(budget.income || 0), planned, actual, available: Number(budget.income || 0) - actual };
+}
 
 function render() {
-  const month = getMonth();
-  el('monthLabel').textContent = monthFormatter.format(monthDate(state.selectedMonth));
-  el('monthPicker').value = state.selectedMonth;
-  el('incomeInput').value = moneyInput(month.income);
-  envelopeList.innerHTML = '';
-  month.envelopes.forEach((envelope) => envelopeList.appendChild(renderEnvelope(envelope)));
-  renderTotals();
-  saveState();
+  const budget = currentBudget();
+  const total = totals();
+  els.monthLabel.textContent = capitalize(monthFormatter.format(monthDate(state.selectedMonth)));
+  els.incomeAmount.textContent = money(total.income);
+  els.plannedAmount.textContent = money(total.planned);
+  els.spentAmount.textContent = money(total.actual);
+  els.availableAmount.textContent = money(total.available);
+  els.availableAmount.style.color = total.available < 0 ? 'var(--negative)' : 'var(--text)';
+  els.summaryIncome.textContent = money(total.income);
+  els.summaryPlanned.textContent = money(total.planned);
+  els.summarySpent.textContent = money(total.actual);
+  els.summaryAvailable.textContent = money(total.available);
+  els.summaryAvailable.style.color = total.available < 0 ? 'var(--negative)' : 'var(--positive)';
+  els.summaryStatus.textContent = total.available < 0 ? 'À corriger' : 'Sous contrôle';
+  els.summaryStatus.classList.toggle('alert', total.available < 0);
+
+  els.envelopeList.replaceChildren();
+  if (!budget.envelopes.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Aucune enveloppe pour ce mois.';
+    els.envelopeList.append(empty);
+    return;
+  }
+  budget.envelopes.forEach(envelope => els.envelopeList.append(renderEnvelope(envelope)));
 }
 
 function renderEnvelope(envelope) {
-  const actual = sumEntries(envelope);
-  const planned = Number(envelope.planned || 0);
-  const difference = actual - planned;
-  const ratio = planned > 0 ? actual / planned : (actual > 0 ? 1 : 0);
-  const percent = Math.max(0, Math.round(ratio * 100));
-  const progress = Math.min(100, percent);
-  const statusClass = Math.abs(difference) < .005 ? 'status-ok' : difference > 0 ? 'status-over' : 'status-under';
-  const differenceText = Math.abs(difference) < .005
-    ? 'Équilibré'
-    : difference > 0
-      ? `+${formatter.format(difference)}`
-      : formatter.format(Math.abs(difference));
-  const progressClass = percent > 100 ? 'over' : percent >= 85 ? 'warn' : '';
-
-  const article = document.createElement('article');
-  article.className = `envelope${envelope.open ? ' open' : ''}`;
-  article.style.setProperty('--accent', envelope.color);
-  article.innerHTML = `
-    <button class="envelope-main" type="button" aria-expanded="${envelope.open}">
-      <span class="envelope-icon">${icons[envelope.icon] || icons.safe}</span>
-      <span class="envelope-copy">
-        <span class="envelope-name">${escapeHtml(envelope.name)}</span>
-        <span class="envelope-subtitle">${escapeHtml(envelope.subtitle || 'Sans description')}</span>
-      </span>
-      <span class="envelope-amount-main">
-        <strong>${formatter.format(actual)}</strong>
-        <small>Dépensé</small>
-      </span>
-      <span class="envelope-meta">
-        <span class="metric"><span>Budget</span><strong>${formatter.format(planned)}</strong></span>
-        <span class="metric"><span>Dépensé</span><strong>${formatter.format(actual)}</strong></span>
-        <span class="metric ${statusClass}"><span>Écart</span><strong>${differenceText}</strong></span>
-      </span>
-      <span class="progress-wrap">
-        <span class="progress-track"><span class="progress-fill ${progressClass}" style="width:${progress}%"></span></span>
-        <span class="progress-percent">${percent}%</span>
-      </span>
-    </button>
-    <div class="envelope-details"><div class="envelope-details-inner"><div class="details-content">
-      <div class="entries"></div>
-      <div class="envelope-total"><span>Total détaillé</span><span>${formatter.format(actual)}</span></div>
-      <div class="envelope-actions"><button class="edit-envelope" type="button">Modifier</button><button class="primary-action add-entry" type="button">＋ Ajouter une ligne</button></div>
-    </div></div></div>`;
-
-  article.querySelector('.envelope-main').addEventListener('click', () => {
-    const wasOpen = envelope.open;
-    getMonth().envelopes.forEach(item => item.open = false);
-    envelope.open = !wasOpen;
+  const node = els.template.content.firstElementChild.cloneNode(true);
+  const actual = spent(envelope);
+  const diff = actual - Number(envelope.planned || 0);
+  const ratio = envelope.planned > 0 ? actual / envelope.planned : (actual > 0 ? 1 : 0);
+  const percent = Math.round(ratio * 100);
+  const isOpen = openEnvelopeId === envelope.id;
+  node.dataset.id = envelope.id;
+  node.style.setProperty('--card-accent', envelope.color || '#3b82f6');
+  node.classList.toggle('open', isOpen);
+  node.querySelector('.envelope-summary').setAttribute('aria-expanded', String(isOpen));
+  node.querySelector('.envelope-icon').textContent = envelope.icon || '💳';
+  node.querySelector('.envelope-name').textContent = envelope.name;
+  node.querySelector('.envelope-description').textContent = envelope.description || 'Sans description';
+  node.querySelector('.envelope-amount').textContent = money(actual);
+  node.querySelector('.planned-value').textContent = money(envelope.planned);
+  node.querySelector('.spent-value').textContent = money(actual);
+  const diffEl = node.querySelector('.difference-value');
+  diffEl.textContent = `${diff > 0 ? '+' : ''}${money(diff)}`;
+  diffEl.classList.add(diff > 0 ? 'negative' : 'positive');
+  const fill = node.querySelector('.progress-fill');
+  fill.style.width = `${Math.min(Math.max(ratio * 100, 0), 100)}%`;
+  fill.style.background = ratio > 1 ? 'var(--negative)' : ratio >= .85 ? 'var(--warning)' : 'var(--positive)';
+  const badge = node.querySelector('.progress-badge');
+  badge.textContent = `${percent}%`;
+  badge.style.color = ratio > 1 ? 'var(--negative)' : ratio >= .85 ? 'var(--warning)' : 'var(--positive)';
+  const message = node.querySelector('.envelope-message');
+  if (diff > 0) {
+    message.textContent = `${money(diff)} au-dessus du budget`;
+    message.classList.add('negative');
+  } else if (diff < 0) {
+    message.textContent = `${money(Math.abs(diff))} encore disponible`;
+    message.classList.add('positive');
+  } else {
+    message.textContent = 'Budget parfaitement équilibré';
+    message.classList.add('positive');
+  }
+  node.querySelector('.expense-count').textContent = `DÉPENSES (${envelope.expenses.length})`;
+  const list = node.querySelector('.expense-list');
+  if (!envelope.expenses.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state'; empty.textContent = 'Aucune dépense enregistrée.'; list.append(empty);
+  } else {
+    envelope.expenses.forEach(expense => {
+      const row = document.createElement('div'); row.className = 'expense-row';
+      row.innerHTML = `<strong></strong><span></span><button type="button" aria-label="Modifier la dépense">•••</button>`;
+      row.querySelector('strong').textContent = expense.label;
+      row.querySelector('span').textContent = money(expense.amount);
+      row.querySelector('button').addEventListener('click', () => openExpenseEditor(envelope.id, expense.id));
+      list.append(row);
+    });
+  }
+  node.querySelector('.envelope-summary').addEventListener('click', () => {
+    openEnvelopeId = openEnvelopeId === envelope.id ? null : envelope.id;
+    navigator.vibrate?.(8);
     render();
+    if (openEnvelopeId) requestAnimationFrame(() => document.querySelector(`[data-id="${CSS.escape(envelope.id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   });
-  article.querySelector('.edit-envelope').addEventListener('click', () => openEnvelopeDialog(envelope));
-  article.querySelector('.add-entry').addEventListener('click', () => openEntryDialog(envelope.id));
-  const entries = article.querySelector('.entries');
-  if (!envelope.entries.length) entries.innerHTML = '<div class="empty-state">Aucune ligne pour le moment</div>';
-  envelope.entries.forEach((entry, index) => {
-    const row = document.createElement('div');
-    row.className = 'entry-row';
-    row.style.animationDelay = `${index * 25}ms`;
-    row.innerHTML = `<button type="button"><span class="entry-label">${escapeHtml(entry.label)}</span></button><span class="entry-amount">${formatter.format(entry.amount)}</span>`;
-    row.querySelector('button').addEventListener('click', () => openEntryDialog(envelope.id, entry));
-    entries.appendChild(row);
-  });
-  return article;
+  node.querySelector('.edit-envelope').addEventListener('click', () => openEnvelopeEditor(envelope.id));
+  node.querySelector('.add-expense').addEventListener('click', () => openExpenseEditor(envelope.id));
+  return node;
 }
 
-function renderTotals() {
-  const month = getMonth();
-  const planned = month.envelopes.reduce((s,e)=>s+Number(e.planned||0),0);
-  const actual = month.envelopes.reduce((s,e)=>s+sumEntries(e),0);
-  const remaining = month.income - actual;
-  const used = month.income > 0 ? Math.min(100, Math.max(0, actual / month.income * 100)) : 0;
-  el('remainingAmount').textContent = formatter.format(remaining);
-  el('remainingCaption').textContent = remaining >= 0 ? 'après toutes les enveloppes' : 'budget dépassé';
-  el('usedPercent').textContent = `${Math.round(used)}%`;
-  el('ringProgress').style.strokeDashoffset = `${113.1 * (1 - used / 100)}`;
-  el('summaryIncome').textContent = formatter.format(month.income);
-  el('summaryPlanned').textContent = formatter.format(planned);
-  el('summaryActual').textContent = formatter.format(actual);
-  el('summaryRemaining').textContent = formatter.format(remaining);
+function capitalize(text) { return text.charAt(0).toUpperCase() + text.slice(1); }
+function inputField(name, label, value = '', type = 'text', attrs = '') {
+  return `<div class="form-field"><label for="${name}">${label}</label><input id="${name}" name="${name}" type="${type}" value="${escapeAttr(value)}" ${attrs}></div>`;
+}
+function selectField(name, label, values, selected) {
+  return `<div class="form-field"><label for="${name}">${label}</label><select id="${name}" name="${name}">${values.map(v => `<option value="${escapeAttr(v)}" ${v === selected ? 'selected' : ''}>${v}</option>`).join('')}</select></div>`;
+}
+function escapeAttr(value) { return String(value).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function showEditor({ title, eyebrow, fields, context }) {
+  editorContext = context;
+  els.dialogTitle.textContent = title;
+  els.dialogEyebrow.textContent = eyebrow;
+  els.editorFields.innerHTML = fields;
+  els.editorDialog.showModal();
+  requestAnimationFrame(() => els.editorFields.querySelector('input')?.focus());
+}
+function openIncomeEditor() {
+  showEditor({ title: 'Revenus du mois', eyebrow: 'BUDGET', context: { type: 'income' }, fields: inputField('income','Montant des revenus',currentBudget().income,'number','min="0" step="0.01" inputmode="decimal" required') });
+}
+function openEnvelopeEditor(envelopeId = null) {
+  const envelope = envelopeId ? currentBudget().envelopes.find(e => e.id === envelopeId) : null;
+  const fields = [
+    inputField('name','Nom de l’enveloppe', envelope?.name || '', 'text', 'maxlength="40" required'),
+    inputField('description','Description', envelope?.description || '', 'text', 'maxlength="70"'),
+    inputField('planned','Budget prévu', envelope?.planned ?? '', 'number', 'min="0" step="0.01" inputmode="decimal" required'),
+    selectField('icon','Icône', ICONS, envelope?.icon || ICONS[0]),
+    selectField('color','Couleur', COLORS, envelope?.color || COLORS[0])
+  ].join('');
+  showEditor({ title: envelope ? 'Modifier l’enveloppe' : 'Nouvelle enveloppe', eyebrow: 'ENVELOPPE', context: { type: 'envelope', envelopeId }, fields });
+}
+function openExpenseEditor(envelopeId, expenseId = null) {
+  const envelope = currentBudget().envelopes.find(e => e.id === envelopeId);
+  const expense = expenseId ? envelope.expenses.find(e => e.id === expenseId) : null;
+  showEditor({ title: expense ? 'Modifier la dépense' : 'Nouvelle dépense', eyebrow: envelope.name.toUpperCase(), context: { type: 'expense', envelopeId, expenseId }, fields: [
+    inputField('label','Libellé', expense?.label || '', 'text', 'maxlength="60" required'),
+    inputField('amount','Montant', expense?.amount ?? '', 'number', 'min="0" step="0.01" inputmode="decimal" required')
+  ].join('') });
 }
 
-function shiftMonth(offset) {
-  const date = monthDate(state.selectedMonth); date.setMonth(date.getMonth()+offset);
-  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-  ensureMonth(key); state.selectedMonth = key; render();
-}
-
-function openEnvelopeDialog(envelope = null) {
-  el('envelopeDialogTitle').textContent = envelope ? 'Modifier l’enveloppe' : 'Nouvelle enveloppe';
-  el('editingEnvelopeId').value = envelope?.id || '';
-  el('envelopeName').value = envelope?.name || '';
-  el('envelopeSubtitle').value = envelope?.subtitle || '';
-  el('envelopePlanned').value = envelope ? moneyInput(envelope.planned) : '';
-  el('envelopeIcon').value = envelope?.icon || 'home';
-  el('deleteEnvelope').classList.toggle('hidden', !envelope);
-  el('envelopeDialog').showModal();
-  setTimeout(()=>el('envelopeName').focus(),100);
-}
-
-function openEntryDialog(envelopeId, entry = null) {
-  el('entryDialogTitle').textContent = entry ? 'Modifier la ligne' : 'Nouvelle ligne';
-  el('editingEntryEnvelopeId').value = envelopeId;
-  el('editingEntryId').value = entry?.id || '';
-  el('entryLabel').value = entry?.label || '';
-  el('entryAmount').value = entry ? moneyInput(entry.amount) : '';
-  el('deleteEntry').classList.toggle('hidden', !entry);
-  el('entryDialog').showModal();
-  setTimeout(()=>el('entryLabel').focus(),100);
-}
-
-el('incomeInput').addEventListener('change', (event) => { getMonth().income = parseMoney(event.target.value); render(); toast('Revenus enregistrés'); });
-el('previousMonth').addEventListener('click', ()=>shiftMonth(-1));
-el('nextMonth').addEventListener('click', ()=>shiftMonth(1));
-el('monthButton').addEventListener('click', ()=> { try { el('monthPicker').showPicker(); } catch { el('monthPicker').click(); } });
-el('monthPicker').addEventListener('change', e => { if(e.target.value){ ensureMonth(e.target.value); state.selectedMonth=e.target.value; render(); }});
-el('addEnvelope').addEventListener('click', ()=>openEnvelopeDialog());
-
-el('envelopeForm').addEventListener('submit', (event) => {
-  if (event.submitter?.value === 'cancel') return;
+els.editorForm.addEventListener('submit', event => {
   event.preventDefault();
-  const month = getMonth();
-  const id = el('editingEnvelopeId').value;
-  const data = { name: el('envelopeName').value.trim(), subtitle: el('envelopeSubtitle').value.trim(), planned: parseMoney(el('envelopePlanned').value), icon: el('envelopeIcon').value };
-  if (!data.name) return;
-  if (id) Object.assign(month.envelopes.find(e=>e.id===id), data);
-  else month.envelopes.push({ id:uid(), ...data, color:COLORS[month.envelopes.length % COLORS.length], open:true, entries:[] });
-  el('envelopeDialog').close(); render(); toast(id ? 'Enveloppe modifiée' : 'Enveloppe ajoutée');
+  const data = new FormData(els.editorForm);
+  if (editorContext.type === 'income') currentBudget().income = Number(data.get('income'));
+  if (editorContext.type === 'envelope') {
+    const payload = { name: String(data.get('name')).trim(), description: String(data.get('description')).trim(), planned: Number(data.get('planned')), icon: String(data.get('icon')), color: String(data.get('color')) };
+    if (editorContext.envelopeId) Object.assign(currentBudget().envelopes.find(e => e.id === editorContext.envelopeId), payload);
+    else {
+      const id = crypto.randomUUID(); currentBudget().envelopes.push({ id, ...payload, expenses: [] }); openEnvelopeId = id;
+    }
+  }
+  if (editorContext.type === 'expense') {
+    const envelope = currentBudget().envelopes.find(e => e.id === editorContext.envelopeId);
+    const payload = { label: String(data.get('label')).trim(), amount: Number(data.get('amount')) };
+    if (editorContext.expenseId) Object.assign(envelope.expenses.find(e => e.id === editorContext.expenseId), payload);
+    else envelope.expenses.push({ id: crypto.randomUUID(), ...payload });
+    openEnvelopeId = envelope.id;
+  }
+  saveState(); els.editorDialog.close(); render();
 });
-el('deleteEnvelope').addEventListener('click', () => {
-  const id = el('editingEnvelopeId').value;
-  if (confirm('Supprimer cette enveloppe et toutes ses lignes ?')) { getMonth().envelopes = getMonth().envelopes.filter(e=>e.id!==id); el('envelopeDialog').close(); render(); toast('Enveloppe supprimée'); }
-});
-
-el('entryForm').addEventListener('submit', (event) => {
-  if (event.submitter?.value === 'cancel') return;
-  event.preventDefault();
-  const envelope = getMonth().envelopes.find(e=>e.id===el('editingEntryEnvelopeId').value);
-  const id = el('editingEntryId').value;
-  const data = { label:el('entryLabel').value.trim(), amount:parseMoney(el('entryAmount').value) };
-  if (!data.label || !envelope) return;
-  if (id) Object.assign(envelope.entries.find(e=>e.id===id), data); else envelope.entries.push({id:uid(),...data});
-  el('entryDialog').close(); render(); toast(id ? 'Ligne modifiée' : 'Ligne ajoutée');
-});
-el('deleteEntry').addEventListener('click', () => {
-  const envelope = getMonth().envelopes.find(e=>e.id===el('editingEntryEnvelopeId').value);
-  const id = el('editingEntryId').value;
-  if (envelope && confirm('Supprimer cette ligne ?')) { envelope.entries = envelope.entries.filter(e=>e.id!==id); el('entryDialog').close(); render(); toast('Ligne supprimée'); }
+document.querySelector('#cancelDialogBtn').addEventListener('click', () => els.editorDialog.close());
+document.querySelector('#editIncomeBtn').addEventListener('click', openIncomeEditor);
+document.querySelector('#addEnvelopeBtn').addEventListener('click', () => openEnvelopeEditor());
+document.querySelector('#resetBtn').addEventListener('click', () => {
+  if (!confirm('Réinitialiser toutes les données de l’application ?')) return;
+  state = structuredClone(seed); openEnvelopeId = null; saveState(); render();
 });
 
-el('resetButton').addEventListener('click', () => {
-  if (confirm('Réinitialiser le mois actuel avec les données de démonstration ?')) { state.months[state.selectedMonth] = structuredClone(sampleMonth); render(); toast('Mois réinitialisé'); }
+document.querySelector('#prevMonth').addEventListener('click', () => shiftMonth(-1));
+document.querySelector('#nextMonth').addEventListener('click', () => shiftMonth(1));
+function shiftMonth(delta) {
+  const date = monthDate(state.selectedMonth); date.setMonth(date.getMonth() + delta);
+  state.selectedMonth = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+  currentBudget(); saveState(); openEnvelopeId = null; render();
+}
+
+document.querySelector('#monthButton').addEventListener('click', () => {
+  els.monthOptions.replaceChildren();
+  const center = monthDate(state.selectedMonth);
+  for (let i = -6; i <= 6; i++) {
+    const date = new Date(center); date.setMonth(center.getMonth() + i);
+    const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = `month-option${key === state.selectedMonth ? ' active' : ''}`;
+    button.textContent = capitalize(monthFormatter.format(date));
+    button.addEventListener('click', () => { state.selectedMonth = key; currentBudget(); saveState(); openEnvelopeId = null; els.monthDialog.close(); render(); });
+    els.monthOptions.append(button);
+  }
+  els.monthDialog.showModal();
 });
 
-function toast(message) { const node=el('toast'); node.textContent=message; node.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>node.classList.remove('show'),1800); }
-function escapeHtml(text='') { return String(text).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c])); }
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(console.error));
 
-window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); deferredInstallPrompt = event; el('installButton').classList.remove('hidden'); });
-el('installButton').addEventListener('click', async () => { if(!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt=null; el('installButton').classList.add('hidden'); });
-window.addEventListener('appinstalled', ()=>toast('Application installée'));
-if ('serviceWorker' in navigator) window.addEventListener('load', ()=>navigator.serviceWorker.register('./service-worker.js'));
+console.info(`Mon Budget v${VERSION}`);
 render();
