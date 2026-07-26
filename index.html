@@ -3,155 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#3457d5">
-  <meta name="description" content="Suivi quotidien d'un nombre illimité d'habitudes.">
-  <title>Mes habitudes</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#f4f5f7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mon Budget">
+  <meta name="description" content="Deux espaces permanents pour gérer un budget personnel et un compte commun.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="icon" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+  <title>Mon Budget</title>
 </head>
 <body>
-  <div id="app" class="app-shell">
+  <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Suivi personnel</p>
-        <h1>Mes habitudes</h1>
+        <p class="eyebrow" id="screenEyebrow">ESPACE PERSONNEL</p>
+        <h1 id="screenTitle">Personnel</h1>
       </div>
-      <button id="installBtn" class="icon-button install-button hidden" type="button" aria-label="Installer l’application" title="Installer">⇩</button>
+      <button id="quickEditBtn" class="round-button" type="button" aria-label="Modifier les revenus">•••</button>
     </header>
 
-    <main>
-      <section id="view-today" class="view active" aria-labelledby="todayHeading">
-        <div class="date-toolbar">
-          <button id="prevDay" class="icon-button" type="button" aria-label="Jour précédent">‹</button>
-          <button id="todayDateButton" class="date-title" type="button">
-            <strong id="todayHeading"></strong>
-            <span id="todayDate"></span>
-          </button>
-          <button id="nextDay" class="icon-button" type="button" aria-label="Jour suivant">›</button>
-        </div>
-
-        <article class="progress-card">
-          <div class="progress-copy">
-            <span id="dailyProgressLabel">0 sur 0</span>
-            <strong id="dailyProgressPercent">0 %</strong>
+    <main id="mainContent">
+      <section id="budgetView" class="view active" aria-live="polite">
+        <section class="hero-card">
+          <div class="hero-copy">
+            <span class="hero-label">Disponible</span>
+            <strong id="availableAmount" class="hero-amount">0,00 €</strong>
+            <span id="heroMessage" class="hero-message">Votre budget est équilibré.</span>
           </div>
-          <div class="progress-track" aria-hidden="true"><span id="dailyProgressBar"></span></div>
-        </article>
+          <div class="hero-orb" aria-hidden="true"><span id="heroPercent">0%</span></div>
+          <div class="hero-metrics">
+            <div><span>Revenus</span><strong id="incomeAmount">0,00 €</strong></div>
+            <div><span>Prévu</span><strong id="plannedAmount">0,00 €</strong></div>
+            <div><span>Dépensé</span><strong id="spentAmount">0,00 €</strong></div>
+          </div>
+        </section>
 
-        <div id="todayHabits" class="habit-list"></div>
-        <button id="addHabitToday" class="primary-button full-width" type="button">＋ Ajouter une habitude</button>
+        <section class="section-head">
+          <div><p class="eyebrow">RÉPARTITION</p><h2>Enveloppes</h2></div>
+          <button id="addEnvelopeBtn" class="primary-button" type="button">＋ Ajouter</button>
+        </section>
+        <section id="envelopeList" class="envelope-list"></section>
       </section>
 
-      <section id="view-history" class="view" aria-labelledby="historyTitle">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Vue mensuelle</p>
-            <h2 id="historyTitle">Historique</h2>
-          </div>
-        </div>
-        <div class="month-toolbar">
-          <button id="prevMonth" class="icon-button" type="button" aria-label="Mois précédent">‹</button>
-          <strong id="monthLabel"></strong>
-          <button id="nextMonth" class="icon-button" type="button" aria-label="Mois suivant">›</button>
-        </div>
-        <div class="calendar-card">
-          <div class="weekday-row"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-          <div id="calendarGrid" class="calendar-grid"></div>
-        </div>
-        <div class="legend"><span><i class="dot empty"></i>Aucune</span><span><i class="dot partial"></i>Partielle</span><span><i class="dot complete"></i>Complète</span></div>
-      </section>
-
-      <section id="view-stats" class="view" aria-labelledby="statsTitle">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Résultats</p>
-            <h2 id="statsTitle">Statistiques</h2>
-          </div>
-          <select id="statsPeriod" class="compact-select" aria-label="Période des statistiques">
-            <option value="month">Ce mois</option>
-            <option value="30">30 derniers jours</option>
-            <option value="90">90 derniers jours</option>
-            <option value="all">Depuis le début</option>
-          </select>
-        </div>
-        <div id="statsCards" class="stats-grid"></div>
-        <article class="panel">
-          <h3>Par habitude</h3>
-          <div id="habitStats" class="habit-stats-list"></div>
-        </article>
-      </section>
-
-      <section id="view-habits" class="view" aria-labelledby="habitsTitle">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Configuration</p>
-            <h2 id="habitsTitle">Mes habitudes</h2>
-          </div>
-          <button id="addHabitSettings" class="small-button" type="button">＋ Ajouter</button>
-        </div>
-        <div id="manageHabits" class="manage-list"></div>
-        <article class="panel data-panel">
-          <h3>Données</h3>
-          <p>Les données restent dans ce navigateur. Exportez régulièrement une sauvegarde.</p>
-          <div class="button-row">
-            <button id="exportData" class="secondary-button" type="button">Exporter</button>
-            <label class="secondary-button file-button">Importer<input id="importData" type="file" accept="application/json"></label>
-          </div>
-        </article>
+      <section id="settingsView" class="view">
+        <section class="settings-card">
+          <p class="eyebrow">ESPACES</p>
+          <h2>Budgets permanents</h2>
+          <button class="settings-row" data-action="rename-personal" type="button"><span><strong>Budget personnel</strong><small id="personalNamePreview">Personnel</small></span><b>›</b></button>
+          <button class="settings-row" data-action="rename-shared" type="button"><span><strong>Compte commun</strong><small id="sharedNamePreview">Compte commun</small></span><b>›</b></button>
+        </section>
+        <section class="settings-card">
+          <p class="eyebrow">DONNÉES</p>
+          <h2>Sauvegarde</h2>
+          <button class="settings-row" data-action="export" type="button"><span><strong>Exporter les données</strong><small>Créer un fichier de sauvegarde JSON</small></span><b>↓</b></button>
+          <label class="settings-row file-row"><span><strong>Importer une sauvegarde</strong><small>Remplacer les données actuelles</small></span><b>↑</b><input id="importInput" type="file" accept="application/json,.json"></label>
+        </section>
+        <section class="settings-card danger-zone">
+          <p class="eyebrow">APPLICATION</p>
+          <h2>Maintenance</h2>
+          <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Restaurer les données d’exemple</small></span><b>↻</b></button>
+          <div class="version-row"><span>Mon Budget</span><strong>V1.0.4</strong></div>
+        </section>
       </section>
     </main>
 
-    <nav class="bottom-nav" aria-label="Navigation principale">
-      <button class="nav-button active" data-view="today" type="button"><span>✓</span><small>Aujourd’hui</small></button>
-      <button class="nav-button" data-view="history" type="button"><span>▦</span><small>Historique</small></button>
-      <button class="nav-button" data-view="stats" type="button"><span>↗</span><small>Statistiques</small></button>
-      <button class="nav-button" data-view="habits" type="button"><span>☰</span><small>Habitudes</small></button>
+    <nav class="tabbar" aria-label="Navigation principale">
+      <button class="tab active" data-tab="personal" type="button"><span class="tab-icon">⌂</span><span>Personnel</span></button>
+      <button class="tab" data-tab="shared" type="button"><span class="tab-icon">♧</span><span>Compte commun</span></button>
+      <button class="tab" data-tab="settings" type="button"><span class="tab-icon">⚙</span><span>Réglages</span></button>
     </nav>
   </div>
 
-  <dialog id="habitDialog" class="habit-dialog">
-    <form id="habitForm" method="dialog">
-      <div class="dialog-header">
-        <div><p class="eyebrow">Configuration</p><h2 id="dialogTitle">Nouvelle habitude</h2></div>
-        <button id="closeDialog" class="icon-button" type="button" aria-label="Fermer">×</button>
-      </div>
-      <input id="habitId" type="hidden">
-      <div class="form-grid name-row">
-        <label class="icon-field">Icône<input id="habitIcon" maxlength="4" value="⭐" required></label>
-        <label>Nom<input id="habitName" maxlength="50" placeholder="Ex. Méditation" required></label>
-      </div>
-      <label>Catégorie<input id="habitCategory" maxlength="40" placeholder="Ex. Bien-être"></label>
-      <div class="form-grid">
-        <label>Objectif<input id="habitGoal" type="number" min="0.1" step="0.1" value="1" required></label>
-        <label>Unité<select id="habitUnit"><option value="validation">validation</option><option value="minute(s)">minute(s)</option><option value="heure(s)">heure(s)</option><option value="verre(s)">verre(s)</option><option value="litre(s)">litre(s)</option><option value="page(s)">page(s)</option><option value="fois">fois</option></select></label>
-      </div>
-      <label>Fréquence<select id="habitFrequency"><option value="daily">Tous les jours</option><option value="weekdays">Certains jours</option></select></label>
-      <fieldset id="weekdayFieldset" class="weekday-picker hidden">
-        <legend>Jours actifs</legend>
-        <label><input type="checkbox" value="1"><span>L</span></label>
-        <label><input type="checkbox" value="2"><span>M</span></label>
-        <label><input type="checkbox" value="3"><span>M</span></label>
-        <label><input type="checkbox" value="4"><span>J</span></label>
-        <label><input type="checkbox" value="5"><span>V</span></label>
-        <label><input type="checkbox" value="6"><span>S</span></label>
-        <label><input type="checkbox" value="0"><span>D</span></label>
-      </fieldset>
-      <div class="form-grid">
-        <label>Date de début<input id="habitStart" type="date" required></label>
-        <label>Date de fin<input id="habitEnd" type="date"></label>
-      </div>
-      <div class="dialog-actions">
-        <button id="archiveHabit" class="danger-button hidden" type="button">Archiver</button>
-        <span class="spacer"></span>
-        <button class="secondary-button" type="button" id="cancelHabit">Annuler</button>
-        <button class="primary-button" type="submit">Enregistrer</button>
-      </div>
+  <dialog id="editorDialog" class="sheet-dialog">
+    <form id="editorForm" method="dialog">
+      <div class="dialog-handle"></div>
+      <div class="dialog-head"><div><p id="dialogEyebrow" class="eyebrow">MODIFICATION</p><h2 id="dialogTitle">Modifier</h2></div><button class="round-button" value="cancel" type="button" id="closeDialogBtn">×</button></div>
+      <div id="editorFields" class="form-fields"></div>
+      <div id="deleteArea"></div>
+      <div class="dialog-actions"><button class="secondary-button" type="button" id="cancelDialogBtn">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div>
     </form>
   </dialog>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js" defer></script>
+  <template id="envelopeTemplate">
+    <article class="envelope-card">
+      <button class="envelope-summary" type="button" aria-expanded="false">
+        <span class="envelope-icon"></span>
+        <span class="envelope-copy"><strong class="envelope-name"></strong><span class="envelope-description"></span></span>
+        <span class="envelope-trailing"><strong class="envelope-amount"></strong><small class="envelope-progress-label"></small></span>
+        <span class="chevron">⌄</span>
+      </button>
+      <div class="envelope-body">
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <div class="metric-grid"><div><span>Budget</span><strong class="planned-value"></strong></div><div><span>Dépensé</span><strong class="spent-value"></strong></div><div><span>Écart</span><strong class="difference-value"></strong></div></div>
+        <div class="expense-header"><span class="expense-count"></span><div><button class="text-button edit-envelope" type="button">Modifier</button><button class="text-button add-expense" type="button">＋ Dépense</button></div></div>
+        <div class="expense-list"></div>
+      </div>
+    </article>
+  </template>
+  <script src="./app.js" defer></script>
 </body>
 </html>

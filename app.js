@@ -1,416 +1,49 @@
 'use strict';
-
-const STORAGE_KEY = 'mes-habitudes-v1';
-const DAY_MS = 86400000;
-const importedCompletionDates = [
-  '2026-07-11','2026-07-12','2026-07-13','2026-07-14','2026-07-15',
-  '2026-07-17','2026-07-18','2026-07-19','2026-07-20',
-  '2026-07-22','2026-07-23','2026-07-24'
-];
-
-const seedState = () => ({
-  version: 1,
-  habits: [
-    { id:'HAB-001', name:'Jeûne intermittent', icon:'⏱️', category:'Santé', frequency:'daily', weekdays:[0,1,2,3,4,5,6], goal:1, unit:'validation', startDate:'2026-07-01', endDate:'2026-07-31', active:true, archivedAt:null, order:1 },
-    { id:'HAB-002', name:'Lecture', icon:'📚', category:'Développement', frequency:'daily', weekdays:[0,1,2,3,4,5,6], goal:1, unit:'validation', startDate:'2026-07-01', endDate:'', active:true, archivedAt:null, order:2 },
-    { id:'HAB-003', name:'Hydratation', icon:'💧', category:'Santé', frequency:'daily', weekdays:[0,1,2,3,4,5,6], goal:1, unit:'validation', startDate:'2026-07-01', endDate:'', active:true, archivedAt:null, order:3 },
-    { id:'HAB-004', name:'Sport', icon:'🏃', category:'Forme', frequency:'daily', weekdays:[0,1,2,3,4,5,6], goal:1, unit:'validation', startDate:'2026-08-01', endDate:'', active:true, archivedAt:null, order:4 }
-  ],
-  entries: Object.fromEntries(importedCompletionDates.map(date => [`${date}::HAB-001`, { value:1, updatedAt:new Date().toISOString() }])),
-  createdAt: new Date().toISOString()
-});
-
-let state = loadState();
-let selectedDate = todayISO();
-let historyMonth = selectedDate.slice(0,7);
-let currentView = 'today';
-let deferredInstallPrompt = null;
-let toastTimer = null;
-
-const el = id => document.getElementById(id);
-const navButtons = [...document.querySelectorAll('.nav-button')];
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedState();
-    const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.habits) || typeof parsed.entries !== 'object') throw new Error('Format invalide');
-    return parsed;
-  } catch (error) {
-    console.warn('Impossible de charger les données locales.', error);
-    return seedState();
-  }
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function todayISO() {
-  const now = new Date();
-  return toISODate(now);
-}
-
-function parseISO(value) {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0);
-}
-
-function toISODate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function shiftDate(value, amount) {
-  const date = parseISO(value);
-  date.setDate(date.getDate() + amount);
-  return toISODate(date);
-}
-
-function shiftMonth(value, amount) {
-  const [year, month] = value.split('-').map(Number);
-  const date = new Date(year, month - 1 + amount, 1, 12);
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-}
-
-function formatDate(value, options) {
-  return new Intl.DateTimeFormat('fr-FR', options).format(parseISO(value));
-}
-
-function isScheduled(habit, dateISO) {
-  if (dateISO < habit.startDate) return false;
-  if (habit.endDate && dateISO > habit.endDate) return false;
-  if (habit.archivedAt && dateISO > habit.archivedAt) return false;
-  if (!habit.active && !habit.archivedAt) return false;
-  if (habit.frequency === 'weekdays') return habit.weekdays.includes(parseISO(dateISO).getDay());
-  return true;
-}
-
-function scheduledHabits(dateISO) {
-  return state.habits
-    .filter(habit => isScheduled(habit, dateISO))
-    .sort((a,b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name, 'fr'));
-}
-
-function entryKey(dateISO, habitId) { return `${dateISO}::${habitId}`; }
-function getValue(dateISO, habitId) { return Number(state.entries[entryKey(dateISO, habitId)]?.value || 0); }
-function isComplete(dateISO, habit) { return getValue(dateISO, habit.id) >= Number(habit.goal); }
-
-function setValue(dateISO, habit, value) {
-  const safe = Math.max(0, Math.round(Number(value) * 10) / 10);
-  const key = entryKey(dateISO, habit.id);
-  if (safe === 0) delete state.entries[key];
-  else state.entries[key] = { value:safe, updatedAt:new Date().toISOString() };
-  saveState();
-  renderAll();
-}
-
-function daySummary(dateISO) {
-  const habits = scheduledHabits(dateISO);
-  const completed = habits.filter(habit => isComplete(dateISO, habit)).length;
-  return { total:habits.length, completed, percent:habits.length ? Math.round(completed / habits.length * 100) : 0 };
-}
-
-function renderToday() {
-  const date = parseISO(selectedDate);
-  el('todayHeading').textContent = selectedDate === todayISO() ? 'Aujourd’hui' : formatDate(selectedDate, { weekday:'long' });
-  el('todayDate').textContent = new Intl.DateTimeFormat('fr-FR', { day:'numeric', month:'long', year:'numeric' }).format(date);
-
-  const habits = scheduledHabits(selectedDate);
-  const summary = daySummary(selectedDate);
-  el('dailyProgressLabel').textContent = `${summary.completed} sur ${summary.total} ${summary.total > 1 ? 'habitudes' : 'habitude'}`;
-  el('dailyProgressPercent').textContent = `${summary.percent} %`;
-  el('dailyProgressBar').style.width = `${summary.percent}%`;
-
-  const container = el('todayHabits');
-  if (!habits.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div><strong>Aucune habitude prévue</strong><p>Ajoutez une habitude ou consultez une autre date.</p></div>`;
-    return;
-  }
-
-  container.innerHTML = habits.map(habit => {
-    const value = getValue(selectedDate, habit.id);
-    const complete = value >= habit.goal;
-    const quantitative = habit.unit !== 'validation' || Number(habit.goal) !== 1;
-    const control = quantitative
-      ? `<div class="quantity-control" aria-label="Progression de ${escapeHTML(habit.name)}"><button type="button" data-action="decrease" data-id="${habit.id}" aria-label="Diminuer">−</button><span>${formatNumber(value)}</span><button type="button" data-action="increase" data-id="${habit.id}" aria-label="Augmenter">+</button></div>`
-      : `<button class="check-button" type="button" data-action="toggle" data-id="${habit.id}" aria-label="${complete ? 'Décocher' : 'Valider'} ${escapeHTML(habit.name)}">✓</button>`;
-    return `<article class="habit-card ${complete ? 'complete' : ''}">
-      <div class="habit-icon">${escapeHTML(habit.icon || '⭐')}</div>
-      <div class="habit-copy"><strong>${escapeHTML(habit.name)}</strong><small>${quantitative ? `${formatNumber(value)} / ${formatNumber(habit.goal)} ${escapeHTML(habit.unit)}` : escapeHTML(habit.category || 'Habitude')}</small></div>
-      ${control}
-    </article>`;
-  }).join('');
-}
-
-function renderHistory() {
-  const [year, month] = historyMonth.split('-').map(Number);
-  el('monthLabel').textContent = new Intl.DateTimeFormat('fr-FR', { month:'long', year:'numeric' }).format(new Date(year, month-1, 1, 12));
-  const first = new Date(year, month-1, 1, 12);
-  const days = new Date(year, month, 0, 12).getDate();
-  const mondayIndex = (first.getDay() + 6) % 7;
-  const cells = [];
-  for (let i=0; i<mondayIndex; i++) cells.push('<div class="calendar-day outside"></div>');
-  for (let day=1; day<=days; day++) {
-    const dateISO = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const summary = daySummary(dateISO);
-    const status = summary.total === 0 ? '' : summary.completed === 0 ? 'none' : summary.completed === summary.total ? 'complete' : 'partial';
-    cells.push(`<button type="button" class="calendar-day ${status} ${dateISO === todayISO() ? 'today' : ''}" data-date="${dateISO}">
-      <span class="day-number">${day}</span><span class="day-score">${summary.total ? `${summary.completed}/${summary.total}` : ''}</span>
-    </button>`);
-  }
-  el('calendarGrid').innerHTML = cells.join('');
-}
-
-function getStatsRange() {
-  const period = el('statsPeriod').value;
-  const today = todayISO();
-  if (period === '30' || period === '90') return { start:shiftDate(today, -(Number(period)-1)), end:today };
-  if (period === 'all') {
-    const starts = state.habits.map(h => h.startDate).filter(Boolean).sort();
-    return { start:starts[0] || today, end:today };
-  }
-  return { start:`${today.slice(0,7)}-01`, end:today };
-}
-
-function enumerateDates(startISO, endISO) {
-  const dates = [];
-  let cursor = startISO;
-  let guard = 0;
-  while (cursor <= endISO && guard < 5000) { dates.push(cursor); cursor = shiftDate(cursor, 1); guard++; }
-  return dates;
-}
-
-function calculateFullDayStreaks(endISO) {
-  const starts = state.habits.map(h => h.startDate).filter(Boolean).sort();
-  const startISO = starts[0] || endISO;
-  const dates = enumerateDates(startISO, endISO);
-  let best = 0, running = 0;
-  dates.forEach(date => {
-    const s = daySummary(date);
-    if (s.total > 0 && s.completed === s.total) { running++; best = Math.max(best, running); }
-    else running = 0;
-  });
-  let current = 0;
-  for (let i=dates.length-1; i>=0; i--) {
-    const s = daySummary(dates[i]);
-    if (s.total > 0 && s.completed === s.total) current++;
-    else break;
-  }
-  return { current, best };
-}
-
-function renderStats() {
-  const { start, end } = getStatsRange();
-  const dates = enumerateDates(start, end);
-  let opportunities = 0, completions = 0, fullDays = 0;
-  dates.forEach(date => {
-    const summary = daySummary(date);
-    opportunities += summary.total;
-    completions += summary.completed;
-    if (summary.total > 0 && summary.completed === summary.total) fullDays++;
-  });
-  const rate = opportunities ? Math.round(completions / opportunities * 100) : 0;
-  const streaks = calculateFullDayStreaks(todayISO());
-  const cards = [
-    ['Progression', `${rate} %`],
-    ['Validations', String(completions)],
-    ['Jours complets', String(fullDays)],
-    ['Série actuelle', `${streaks.current} j`]
-  ];
-  el('statsCards').innerHTML = cards.map(([label,value]) => `<article class="stat-card"><small>${label}</small><strong>${value}</strong></article>`).join('');
-
-  const relevantHabits = state.habits.filter(h => h.startDate <= end && (!h.endDate || h.endDate >= start));
-  el('habitStats').innerHTML = relevantHabits.length ? relevantHabits.map(habit => {
-    let total=0, done=0;
-    dates.forEach(date => { if (isScheduled(habit,date)) { total++; if (isComplete(date,habit)) done++; } });
-    const percent = total ? Math.round(done/total*100) : 0;
-    return `<div class="habit-stat-row"><span class="mini-icon">${escapeHTML(habit.icon || '⭐')}</span><div class="habit-stat-copy"><strong>${escapeHTML(habit.name)}</strong><small>${done} sur ${total}</small><div class="mini-progress"><i style="width:${percent}%"></i></div></div><span class="habit-stat-percent">${percent}%</span></div>`;
-  }).join('') : '<p class="empty-state">Aucune donnée pour cette période.</p>';
-}
-
-function renderManageHabits() {
-  const habits = [...state.habits].sort((a,b) => (a.active === b.active ? 0 : a.active ? -1 : 1) || (a.order ?? 999)-(b.order ?? 999));
-  el('manageHabits').innerHTML = habits.map(habit => {
-    const frequency = habit.frequency === 'daily' ? 'Tous les jours' : `${habit.weekdays.length} jour(s) par semaine`;
-    const status = habit.active ? frequency : 'Archivée';
-    return `<article class="manage-card ${habit.active ? '' : 'archived'}"><div class="habit-icon">${escapeHTML(habit.icon || '⭐')}</div><div><strong>${escapeHTML(habit.name)}</strong><small>${escapeHTML(status)} · objectif ${formatNumber(habit.goal)} ${escapeHTML(habit.unit)}</small></div><div class="manage-actions"><button type="button" data-edit="${habit.id}" aria-label="Modifier ${escapeHTML(habit.name)}">✎</button></div></article>`;
-  }).join('');
-}
-
-function renderAll() {
-  renderToday();
-  renderHistory();
-  renderStats();
-  renderManageHabits();
-}
-
-function showView(name) {
-  currentView = name;
-  document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${name}`));
-  navButtons.forEach(button => button.classList.toggle('active', button.dataset.view === name));
-  if (name === 'history') historyMonth = selectedDate.slice(0,7);
-  renderAll();
-  window.scrollTo({ top:0, behavior:'smooth' });
-}
-
-function openHabitDialog(habitId=null) {
-  const dialog = el('habitDialog');
-  const habit = habitId ? state.habits.find(item => item.id === habitId) : null;
-  el('dialogTitle').textContent = habit ? 'Modifier l’habitude' : 'Nouvelle habitude';
-  el('habitId').value = habit?.id || '';
-  el('habitIcon').value = habit?.icon || '⭐';
-  el('habitName').value = habit?.name || '';
-  el('habitCategory').value = habit?.category || '';
-  el('habitGoal').value = habit?.goal || 1;
-  el('habitUnit').value = habit?.unit || 'validation';
-  el('habitFrequency').value = habit?.frequency || 'daily';
-  el('habitStart').value = habit?.startDate || selectedDate;
-  el('habitEnd').value = habit?.endDate || '';
-  document.querySelectorAll('#weekdayFieldset input').forEach(input => input.checked = (habit?.weekdays || [0,1,2,3,4,5,6]).includes(Number(input.value)));
-  toggleWeekdayFieldset();
-  el('archiveHabit').classList.toggle('hidden', !habit || !habit.active);
-  dialog.showModal();
-  setTimeout(() => el('habitName').focus(), 50);
-}
-
-function closeHabitDialog() { el('habitDialog').close(); }
-function toggleWeekdayFieldset() { el('weekdayFieldset').classList.toggle('hidden', el('habitFrequency').value !== 'weekdays'); }
-
-function saveHabitFromForm(event) {
-  event.preventDefault();
-  const id = el('habitId').value;
-  const weekdays = [...document.querySelectorAll('#weekdayFieldset input:checked')].map(input => Number(input.value));
-  const habitData = {
-    name:el('habitName').value.trim(), icon:el('habitIcon').value.trim() || '⭐', category:el('habitCategory').value.trim(),
-    goal:Number(el('habitGoal').value), unit:el('habitUnit').value, frequency:el('habitFrequency').value,
-    weekdays:el('habitFrequency').value === 'daily' ? [0,1,2,3,4,5,6] : weekdays,
-    startDate:el('habitStart').value, endDate:el('habitEnd').value
-  };
-  if (!habitData.name || !habitData.startDate || habitData.goal <= 0) return showToast('Veuillez compléter les champs obligatoires.');
-  if (habitData.frequency === 'weekdays' && !habitData.weekdays.length) return showToast('Sélectionnez au moins un jour.');
-  if (habitData.endDate && habitData.endDate < habitData.startDate) return showToast('La date de fin doit suivre la date de début.');
-
-  if (id) {
-    const habit = state.habits.find(item => item.id === id);
-    Object.assign(habit, habitData);
-    showToast('Habitude mise à jour.');
-  } else {
-    const nextId = `HAB-${String(Math.max(0, ...state.habits.map(h => Number(h.id.replace(/\D/g,'')) || 0)) + 1).padStart(3,'0')}`;
-    state.habits.push({ id:nextId, ...habitData, active:true, archivedAt:null, order:state.habits.length+1 });
-    showToast('Habitude ajoutée.');
-  }
-  saveState();
-  closeHabitDialog();
-  renderAll();
-}
-
-function archiveCurrentHabit() {
-  const id = el('habitId').value;
-  const habit = state.habits.find(item => item.id === id);
-  if (!habit) return;
-  habit.active = false;
-  habit.archivedAt = todayISO();
-  if (!habit.endDate || habit.endDate > habit.archivedAt) habit.endDate = habit.archivedAt;
-  saveState();
-  closeHabitDialog();
-  renderAll();
-  showToast('Habitude archivée, historique conservé.');
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `mes-habitudes-${todayISO()}.json`;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  showToast('Sauvegarde exportée.');
-}
-
-async function importData(file) {
-  try {
-    const parsed = JSON.parse(await file.text());
-    if (!Array.isArray(parsed.habits) || typeof parsed.entries !== 'object') throw new Error('Structure invalide');
-    state = parsed;
-    saveState();
-    renderAll();
-    showToast('Données importées.');
-  } catch (error) {
-    console.error(error);
-    showToast('Fichier de sauvegarde invalide.');
-  } finally { el('importData').value = ''; }
-}
-
-function showToast(message) {
-  const toast = el('toast');
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
-}
-
-function formatNumber(value) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits:1 }).format(value); }
-function escapeHTML(value='') { return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char])); }
-
-navButtons.forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
-el('prevDay').addEventListener('click', () => { selectedDate = shiftDate(selectedDate,-1); renderAll(); });
-el('nextDay').addEventListener('click', () => { selectedDate = shiftDate(selectedDate,1); renderAll(); });
-el('todayDateButton').addEventListener('click', () => { selectedDate = todayISO(); renderAll(); });
-el('prevMonth').addEventListener('click', () => { historyMonth = shiftMonth(historyMonth,-1); renderHistory(); });
-el('nextMonth').addEventListener('click', () => { historyMonth = shiftMonth(historyMonth,1); renderHistory(); });
-el('statsPeriod').addEventListener('change', renderStats);
-el('addHabitToday').addEventListener('click', () => openHabitDialog());
-el('addHabitSettings').addEventListener('click', () => openHabitDialog());
-el('closeDialog').addEventListener('click', closeHabitDialog);
-el('cancelHabit').addEventListener('click', closeHabitDialog);
-el('habitFrequency').addEventListener('change', toggleWeekdayFieldset);
-el('habitForm').addEventListener('submit', saveHabitFromForm);
-el('archiveHabit').addEventListener('click', archiveCurrentHabit);
-el('exportData').addEventListener('click', exportData);
-el('importData').addEventListener('change', event => event.target.files[0] && importData(event.target.files[0]));
-
-el('todayHabits').addEventListener('click', event => {
-  const button = event.target.closest('button[data-action]');
-  if (!button) return;
-  const habit = state.habits.find(item => item.id === button.dataset.id);
-  if (!habit) return;
-  const value = getValue(selectedDate, habit.id);
-  if (button.dataset.action === 'toggle') setValue(selectedDate, habit, value >= habit.goal ? 0 : habit.goal);
-  if (button.dataset.action === 'increase') setValue(selectedDate, habit, value + 1);
-  if (button.dataset.action === 'decrease') setValue(selectedDate, habit, value - 1);
-});
-
-el('calendarGrid').addEventListener('click', event => {
-  const button = event.target.closest('[data-date]');
-  if (!button) return;
-  selectedDate = button.dataset.date;
-  showView('today');
-});
-
-el('manageHabits').addEventListener('click', event => {
-  const button = event.target.closest('[data-edit]');
-  if (button) openHabitDialog(button.dataset.edit);
-});
-
-window.addEventListener('beforeinstallprompt', event => {
-  event.preventDefault(); deferredInstallPrompt = event; el('installBtn').classList.remove('hidden');
-});
-el('installBtn').addEventListener('click', async () => {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-  el('installBtn').classList.add('hidden');
-});
-window.addEventListener('appinstalled', () => showToast('Application installée.'));
-
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn));
-}
-
-renderAll();
+const VERSION='1.0.4';
+const STORAGE_KEY='mon-budget-data-v2';
+const OLD_STORAGE_KEY='mon-budget-data-v1';
+const money=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
+const ICONS=['🏠','🛒','📈','👤','👥','🏦','🚗','💡','📱','🎯','💳','🧾','🍽️','🧸'];
+const COLORS=['#1667d9','#2f9e5b','#e58a00','#8e56c7','#dc4451','#665ed1','#128ca8','#a97900'];
+const uid=()=>crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;
+const expense=(label,amount)=>({id:uid(),label,amount});
+const envelope=(name,description,icon,color,planned,expenses=[])=>({id:uid(),name,description,icon,color,planned,expenses});
+const seed=()=>({version:VERSION,activeTab:'personal',spaces:{personal:{name:'Personnel',income:2709,envelopes:[
+ envelope('Livret A','Charges fixes','🏠','#1667d9',320,[expense('Abonnement YouTube',6.5),expense('Péage et stationnement',8),expense('Assurance automobile',63),expense('Traiteur',115),expense('Carburant',103),expense('Abonnement ChatGPT',23),expense('Abonnement SFR',8)]),
+ envelope('Boursobank','Alimentaire et loisirs','🛒','#2f9e5b',200,[expense('Alimentation et restaurant',111.5),expense('Shopping et loisirs',104)]),
+ envelope('Revolut','Épargne, crypto et bourse','📈','#e58a00',500,[expense('Épargne Rose',30),expense('Crypto et bourse',470)]),
+ envelope('Alizée Cristel','Virement','👤','#8e56c7',150,[expense('Pension Rose',150)]),
+ envelope('Compte commun','Virement vers le foyer','👥','#dc4451',1200,[expense('Virement mensuel',1200)]),
+ envelope('LEP','Épargne de précaution','🏦','#665ed1',150,[expense('Réserve',150)])]},shared:{name:'Compte commun',income:2400,envelopes:[
+ envelope('Logement','Loyer et charges','🏠','#1667d9',1150,[expense('Loyer',950),expense('Électricité',110),expense('Internet',40)]),
+ envelope('Courses','Alimentation du foyer','🛒','#2f9e5b',500,[expense('Courses principales',310)]),
+ envelope('Transport','Mobilité commune','🚗','#e58a00',220,[expense('Carburant',120)]),
+ envelope('Maison','Entretien et équipement','💡','#8e56c7',180,[expense('Produits ménagers',42)]),
+ envelope('Loisirs','Sorties et activités','🍽️','#dc4451',200,[expense('Restaurant',75)]),
+ envelope('Épargne commune','Projets du foyer','🏦','#665ed1',150,[expense('Virement épargne',150)])]}}});
+let state=load();let openEnvelopeId=null;let editorContext=null;
+const $=s=>document.querySelector(s);
+const els={screenEyebrow:$('#screenEyebrow'),screenTitle:$('#screenTitle'),quickEditBtn:$('#quickEditBtn'),budgetView:$('#budgetView'),settingsView:$('#settingsView'),available:$('#availableAmount'),income:$('#incomeAmount'),planned:$('#plannedAmount'),spent:$('#spentAmount'),heroMessage:$('#heroMessage'),heroPercent:$('#heroPercent'),heroOrb:$('.hero-orb'),list:$('#envelopeList'),template:$('#envelopeTemplate'),dialog:$('#editorDialog'),form:$('#editorForm'),fields:$('#editorFields'),dialogTitle:$('#dialogTitle'),dialogEyebrow:$('#dialogEyebrow'),deleteArea:$('#deleteArea'),personalNamePreview:$('#personalNamePreview'),sharedNamePreview:$('#sharedNamePreview')};
+function load(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved?.spaces?.personal&&saved?.spaces?.shared)return saved;const old=JSON.parse(localStorage.getItem(OLD_STORAGE_KEY));if(old?.months){const latest=old.months[old.selectedMonth]||Object.values(old.months)[0];const fresh=seed();if(latest){fresh.spaces.personal.income=Number(latest.income||0);fresh.spaces.personal.envelopes=latest.envelopes||[];}return fresh;}}catch(e){console.warn(e)}return seed()}
+function save(){state.version=VERSION;localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function activeSpace(){return state.spaces[state.activeTab]}
+function spent(e){return e.expenses.reduce((s,x)=>s+Number(x.amount||0),0)}
+function totals(space=activeSpace()){const planned=space.envelopes.reduce((s,e)=>s+Number(e.planned||0),0);const actual=space.envelopes.reduce((s,e)=>s+spent(e),0);const income=Number(space.income||0);return{income,planned,actual,available:income-actual}}
+function fmt(n){return money.format(Number(n||0))}
+function render(){const settings=state.activeTab==='settings';els.budgetView.classList.toggle('active',!settings);els.settingsView.classList.toggle('active',settings);document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.activeTab));els.quickEditBtn.hidden=settings;els.screenEyebrow.textContent=settings?'APPLICATION':state.activeTab==='personal'?'ESPACE PERSONNEL':'ESPACE PARTAGÉ';els.screenTitle.textContent=settings?'Réglages':activeSpace().name;els.personalNamePreview.textContent=state.spaces.personal.name;els.sharedNamePreview.textContent=state.spaces.shared.name;if(settings)return;const t=totals();els.available.textContent=fmt(t.available);els.income.textContent=fmt(t.income);els.planned.textContent=fmt(t.planned);els.spent.textContent=fmt(t.actual);const rate=t.income>0?Math.round(t.actual/t.income*100):0;els.heroPercent.textContent=`${rate}%`;els.heroOrb.style.setProperty('--progress',`${Math.min(rate,100)}%`);els.available.classList.toggle('negative',t.available<0);els.heroMessage.textContent=t.available<0?'Les dépenses dépassent les revenus.':rate>=90?'Votre marge disponible devient faible.':'Votre budget permanent est sous contrôle.';els.list.replaceChildren();if(!activeSpace().envelopes.length){const p=document.createElement('p');p.className='empty-state';p.textContent='Aucune enveloppe. Ajoutez votre première répartition.';els.list.append(p)}else activeSpace().envelopes.forEach(e=>els.list.append(renderEnvelope(e)))}
+function renderEnvelope(e){const node=els.template.content.firstElementChild.cloneNode(true);const actual=spent(e),planned=Number(e.planned||0),diff=planned-actual,ratio=planned?actual/planned:(actual?1:0),open=e.id===openEnvelopeId;node.dataset.id=e.id;node.style.setProperty('--card-accent',e.color||COLORS[0]);node.classList.toggle('open',open);const summary=node.querySelector('.envelope-summary');summary.setAttribute('aria-expanded',String(open));node.querySelector('.envelope-icon').textContent=e.icon||'💳';node.querySelector('.envelope-name').textContent=e.name;node.querySelector('.envelope-description').textContent=e.description||'Sans description';node.querySelector('.envelope-amount').textContent=fmt(actual);node.querySelector('.envelope-progress-label').textContent=`${Math.round(ratio*100)} % du budget`;node.querySelector('.planned-value').textContent=fmt(planned);node.querySelector('.spent-value').textContent=fmt(actual);const d=node.querySelector('.difference-value');d.textContent=`${diff<0?'−':''}${fmt(Math.abs(diff))}`;d.classList.add(diff<0?'negative':'positive');const fill=node.querySelector('.progress-fill');fill.style.width=`${Math.min(Math.max(ratio*100,0),100)}%`;fill.style.background=ratio>1?'var(--negative)':ratio>=.85?'var(--warning)':'var(--positive)';node.querySelector('.expense-count').textContent=`DÉPENSES (${e.expenses.length})`;const list=node.querySelector('.expense-list');if(!e.expenses.length){const p=document.createElement('p');p.className='empty-state';p.textContent='Aucune dépense enregistrée.';list.append(p)}else e.expenses.forEach(x=>{const row=document.createElement('div');row.className='expense-row';row.innerHTML='<strong></strong><span></span><button type="button" aria-label="Modifier">•••</button>';row.querySelector('strong').textContent=x.label;row.querySelector('span').textContent=fmt(x.amount);row.querySelector('button').onclick=()=>openExpenseEditor(e.id,x.id);list.append(row)});summary.onclick=()=>{openEnvelopeId=open?null:e.id;navigator.vibrate?.(8);render()};node.querySelector('.edit-envelope').onclick=()=>openEnvelopeEditor(e.id);node.querySelector('.add-expense').onclick=()=>openExpenseEditor(e.id);return node}
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+function input(name,label,value='',type='text',attrs=''){return `<div class="form-field"><label for="${name}">${label}</label><input id="${name}" name="${name}" type="${type}" value="${esc(value)}" ${attrs}></div>`}
+function select(name,label,values,selected){return `<div class="form-field"><label for="${name}">${label}</label><select id="${name}" name="${name}">${values.map(v=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${v}</option>`).join('')}</select></div>`}
+function showEditor({title,eyebrow,fields,context,deleteLabel}){editorContext=context;els.dialogTitle.textContent=title;els.dialogEyebrow.textContent=eyebrow;els.fields.innerHTML=fields;els.deleteArea.innerHTML=deleteLabel?`<button class="delete-button" id="deleteButton" type="button">${deleteLabel}</button>`:'';if(deleteLabel)$('#deleteButton').onclick=deleteCurrent;els.dialog.showModal();setTimeout(()=>els.fields.querySelector('input')?.focus(),100)}
+function openIncomeEditor(){showEditor({title:'Revenus de référence',eyebrow:activeSpace().name.toUpperCase(),context:{type:'income'},fields:input('income','Montant disponible',activeSpace().income,'number','min="0" step="0.01" inputmode="decimal" required')})}
+function openEnvelopeEditor(id=null){const e=id?activeSpace().envelopes.find(x=>x.id===id):null;showEditor({title:e?'Modifier l’enveloppe':'Nouvelle enveloppe',eyebrow:'RÉPARTITION',context:{type:'envelope',id},deleteLabel:e?'Supprimer cette enveloppe':null,fields:[input('name','Nom',e?.name||'','','maxlength="40" required'),input('description','Description',e?.description||'','','maxlength="70"'),input('planned','Budget prévu',e?.planned??'','number','min="0" step="0.01" inputmode="decimal" required'),select('icon','Icône',ICONS,e?.icon||ICONS[0]),select('color','Couleur',COLORS,e?.color||COLORS[0])].join('')})}
+function openExpenseEditor(envelopeId,id=null){const env=activeSpace().envelopes.find(e=>e.id===envelopeId),x=id?env.expenses.find(y=>y.id===id):null;showEditor({title:x?'Modifier la dépense':'Nouvelle dépense',eyebrow:env.name.toUpperCase(),context:{type:'expense',envelopeId,id},deleteLabel:x?'Supprimer cette dépense':null,fields:input('label','Libellé',x?.label||'','','maxlength="60" required')+input('amount','Montant',x?.amount??'','number','min="0" step="0.01" inputmode="decimal" required')})}
+function openRename(spaceKey){showEditor({title:'Renommer l’espace',eyebrow:'RÉGLAGES',context:{type:'rename',spaceKey},fields:input('name','Nom affiché',state.spaces[spaceKey].name,'','maxlength="30" required')})}
+function deleteCurrent(){if(editorContext.type==='envelope'&&confirm('Supprimer cette enveloppe et toutes ses dépenses ?'))activeSpace().envelopes=activeSpace().envelopes.filter(e=>e.id!==editorContext.id);else if(editorContext.type==='expense'&&confirm('Supprimer cette dépense ?')){const env=activeSpace().envelopes.find(e=>e.id===editorContext.envelopeId);env.expenses=env.expenses.filter(x=>x.id!==editorContext.id)}else return;save();els.dialog.close();openEnvelopeId=null;render()}
+els.form.onsubmit=e=>{e.preventDefault();const f=new FormData(els.form);if(editorContext.type==='income')activeSpace().income=Number(f.get('income'));if(editorContext.type==='rename')state.spaces[editorContext.spaceKey].name=String(f.get('name')).trim();if(editorContext.type==='envelope'){const payload={name:String(f.get('name')).trim(),description:String(f.get('description')).trim(),planned:Number(f.get('planned')),icon:String(f.get('icon')),color:String(f.get('color'))};if(editorContext.id)Object.assign(activeSpace().envelopes.find(x=>x.id===editorContext.id),payload);else{const id=uid();activeSpace().envelopes.push({id,...payload,expenses:[]});openEnvelopeId=id}}if(editorContext.type==='expense'){const env=activeSpace().envelopes.find(x=>x.id===editorContext.envelopeId);const payload={label:String(f.get('label')).trim(),amount:Number(f.get('amount'))};if(editorContext.id)Object.assign(env.expenses.find(x=>x.id===editorContext.id),payload);else env.expenses.push({id:uid(),...payload});openEnvelopeId=env.id}save();els.dialog.close();render()};
+$('#cancelDialogBtn').onclick=$('#closeDialogBtn').onclick=()=>els.dialog.close();$('#addEnvelopeBtn').onclick=()=>openEnvelopeEditor();els.quickEditBtn.onclick=openIncomeEditor;
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.activeTab=b.dataset.tab;openEnvelopeId=null;save();render()});
+document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>{const a=b.dataset.action;if(a==='rename-personal')openRename('personal');if(a==='rename-shared')openRename('shared');if(a==='export'){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mon-budget-sauvegarde.json';link.click();URL.revokeObjectURL(url)}if(a==='reset'&&confirm('Réinitialiser toutes les données de l’application ?')){state=seed();save();render()}});
+$('#importInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!imported?.spaces?.personal||!imported?.spaces?.shared)throw new Error();if(confirm('Importer cette sauvegarde et remplacer les données actuelles ?')){state=imported;state.activeTab='settings';save();render()}}catch{alert('Ce fichier de sauvegarde est invalide.')}e.target.value=''};
+render();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js'));
