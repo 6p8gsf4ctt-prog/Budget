@@ -1,33 +1,14 @@
-# Mon Budget — V1.1.0 finale
+# Mon Organisation Financière — V1.3.0
 
-Application web progressive (PWA) de gestion de deux budgets permanents : **Personnel** et **Compte commun**.
+Application PWA de budget permanent avec deux espaces strictement séparés : Personnel et Compte commun.
 
-## Fonctions livrées
+## Principes
+- aucune gestion mensuelle ;
+- aucune alerte ou comparaison entre espaces ;
+- enveloppes classées en Dépense, Épargne ou Transfert ;
+- import compatible avec les sauvegardes JSON des versions précédentes ;
+- aperçu et copie de récupération avant import ;
+- stockage IndexedDB et fonctionnement hors connexion.
 
-- tableau de bord consolidé ;
-- sources de revenus multiples ;
-- enveloppes personnalisables et réorganisables ;
-- dépenses détaillées ;
-- alertes de seuil et de dépassement ;
-- analyse comparative ;
-- mode confidentiel ;
-- sauvegarde locale automatique ;
-- export et import JSON ;
-- installation iPhone, Android et ordinateur ;
-- fonctionnement hors connexion ;
-- migration des données des versions précédentes.
-
-## Déploiement GitHub Pages
-
-1. Décompresser l’archive.
-2. Copier **tous les fichiers et le dossier `assets`** à la racine du dépôt `Budget`.
-3. Dans GitHub : **Settings → Pages → Deploy from a branch → `main` / root**.
-4. Attendre le déploiement, puis ouvrir la page et l’actualiser une fois.
-
-Aucune compilation ni dépendance n’est nécessaire.
-
-## Données et confidentialité
-
-Les données restent dans le stockage local du navigateur. L’application n’utilise aucun serveur, compte utilisateur, outil publicitaire ou service d’analyse.
-
-Avant de vider les données du navigateur ou de changer d’appareil, créer une sauvegarde depuis **Réglages → Exporter les données**.
+## Publication
+Copiez tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.

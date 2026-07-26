@@ -1,23 +1,7 @@
-# Livraison sur GitHub Pages
+# Déploiement V1.3.0
 
-Le contenu de ce dossier doit être placé directement à la racine du dépôt.
-
-Structure attendue :
-
-```
-Budget/
-├── index.html
-├── style.css
-├── app.js
-├── manifest.webmanifest
-├── service-worker.js
-├── README.md
-├── CHANGELOG.md
-├── DEPLOIEMENT.md
-└── assets/
-    ├── icon-180.png
-    ├── icon-192.png
-    └── icon-512.png
-```
-
-Après publication, une ancienne version peut rester brièvement en cache. Fermer puis rouvrir l’application installée, ou actualiser la page dans Safari/Chrome.
+1. Exportez une sauvegarde JSON depuis la version actuellement installée.
+2. Remplacez les fichiers du dépôt GitHub Pages par le contenu de ce dossier.
+3. Attendez la publication GitHub Pages.
+4. Ouvrez Réglages > Importer une sauvegarde et sélectionnez votre JSON.
+5. Vérifiez le récapitulatif puis confirmez.

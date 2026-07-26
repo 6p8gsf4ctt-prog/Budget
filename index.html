@@ -9,12 +9,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mon Budget">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Deux espaces permanents pour gérer un budget personnel et un compte commun.">
+  <meta name="description" content="Une photographie permanente de votre organisation financière personnelle et commune.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
   <link rel="icon" href="./assets/icon-192.png">
   <link rel="stylesheet" href="./style.css">
-  <title>Mon Budget</title>
+  <title>Mon Organisation Financière</title>
 </head>
 <body>
   <div class="app-shell">
@@ -29,14 +29,17 @@
     <main id="mainContent">
       <section id="overviewView" class="view active" aria-live="polite">
         <section class="overview-hero">
-          <p class="eyebrow">VUE D’ENSEMBLE</p>
-          <h2>Vos deux budgets</h2>
+          <p class="eyebrow">ORGANISATION FINANCIÈRE</p>
+          <h2>Votre photographie actuelle</h2>
           <strong id="combinedAvailable" class="overview-total">0,00 €</strong>
-          <span id="overviewMessage" class="overview-message">Situation globale</span>
+          <span id="overviewMessage" class="overview-message">Disponible cumulé, sans double comptage</span>
         </section>
         <section id="spaceOverviewCards" class="overview-grid"></section>
-        <section class="section-head compact"><div><p class="eyebrow">À SURVEILLER</p><h2>Alertes</h2></div></section>
-        <section id="alertList" class="alert-list"></section>
+        <section class="settings-card overview-note">
+          <p class="eyebrow">PRINCIPE</p>
+          <h2>Deux espaces séparés</h2>
+          <p class="analysis-caption">Le budget personnel et le compte commun ne sont jamais classés ni comparés entre eux. Un versement vers le compte commun reste un transfert personnel.</p>
+        </section>
       </section>
 
       <section id="budgetView" class="view" aria-live="polite">
@@ -67,22 +70,6 @@
         <section id="envelopeList" class="envelope-list"></section>
       </section>
 
-      <section id="analysisView" class="view" aria-live="polite">
-        <section class="analysis-hero">
-          <div><p class="eyebrow">RÉPARTITION GLOBALE</p><h2>Analyse des budgets</h2></div>
-          <div class="analysis-total-row"><span>Total engagé</span><strong id="analysisSpent">0,00 €</strong></div>
-          <div class="analysis-bar"><i id="analysisBar"></i></div>
-          <p id="analysisCaption" class="analysis-caption">Analyse de vos deux espaces permanents.</p>
-        </section>
-        <section class="analysis-grid">
-          <article class="analysis-card"><span class="analysis-icon">↗</span><small>TAUX D’ENGAGEMENT</small><strong id="commitmentRate">0 %</strong><p>Part des revenus affectée aux dépenses enregistrées.</p></article>
-          <article class="analysis-card"><span class="analysis-icon">◇</span><small>MARGE GLOBALE</small><strong id="globalMargin">0,00 €</strong><p>Somme encore disponible sur les deux espaces.</p></article>
-        </section>
-        <section class="section-head compact"><div><p class="eyebrow">PLUS GROS POSTES</p><h2>Enveloppes principales</h2></div></section>
-        <section id="topEnvelopeList" class="ranking-list"></section>
-        <section class="section-head compact"><div><p class="eyebrow">COMPARAISON</p><h2>Personnel et commun</h2></div></section>
-        <section id="spaceComparison" class="comparison-list"></section>
-      </section>
 
       <section id="settingsView" class="view">
         <section class="settings-card">
@@ -97,10 +84,22 @@
           <button class="settings-row" data-action="rename-shared" type="button"><span><strong>Compte commun</strong><small id="sharedNamePreview">Compte commun</small></span><b>›</b></button>
         </section>
         <section class="settings-card">
+          <p class="eyebrow">PROTECTION</p>
+          <h2>État des données</h2>
+          <div class="storage-status" id="storageStatus">
+            <span class="storage-status-icon" id="storageStatusIcon">…</span>
+            <span><strong id="storageStatusTitle">Vérification…</strong><small id="storageStatusDetail">Contrôle du stockage en cours</small></span>
+          </div>
+          <div class="version-row"><span>Dernière sauvegarde</span><strong id="lastSavedPreview">—</strong></div>
+          <div class="version-row"><span>Copies de récupération</span><strong id="snapshotCountPreview">—</strong></div>
+          <button class="settings-row" data-action="protect-storage" type="button"><span><strong>Renforcer le stockage</strong><small>Demander à l’appareil de conserver les données</small></span><b>✓</b></button>
+          <button class="settings-row" data-action="restore-snapshot" type="button"><span><strong>Restaurer une copie récente</strong><small>Revenir à une sauvegarde automatique locale</small></span><b>↶</b></button>
+        </section>
+        <section class="settings-card">
           <p class="eyebrow">DONNÉES</p>
           <h2>Sauvegarde</h2>
           <button class="settings-row" data-action="export" type="button"><span><strong>Exporter les données</strong><small>Créer un fichier de sauvegarde JSON</small></span><b>↓</b></button>
-          <label class="settings-row file-row"><span><strong>Importer une sauvegarde</strong><small>Remplacer les données actuelles</small></span><b>↑</b><input id="importInput" type="file" accept="application/json,.json"></label>
+          <label class="settings-row file-row"><span><strong>Importer une sauvegarde</strong><small>Vérifier puis restaurer votre fichier JSON</small></span><b>↑</b><input id="importInput" type="file" accept="application/json,.json"></label>
         </section>
         <section class="settings-card">
           <p class="eyebrow">INSTALLATION</p>
@@ -110,8 +109,8 @@
         <section class="settings-card danger-zone">
           <p class="eyebrow">APPLICATION</p>
           <h2>Maintenance</h2>
-          <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Restaurer les données d’exemple</small></span><b>↻</b></button>
-          <div class="version-row"><span>Mon Budget</span><strong>V1.1.0 · FINALE</strong></div>
+          <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Effacer les données après double confirmation</small></span><b>↻</b></button>
+          <div class="version-row"><span>Mon Budget</span><strong>V1.3.0 · ORGANISATION FINANCIÈRE</strong></div>
         </section>
       </section>
     </main>
@@ -120,11 +119,20 @@
       <button class="tab active" data-tab="overview" type="button"><span class="tab-icon">◫</span><span>Accueil</span></button>
       <button class="tab" data-tab="personal" type="button"><span class="tab-icon">⌂</span><span>Personnel</span></button>
       <button class="tab" data-tab="shared" type="button"><span class="tab-icon">♧</span><span>Compte commun</span></button>
-      <button class="tab" data-tab="analysis" type="button"><span class="tab-icon">⌁</span><span>Analyse</span></button>
       <button class="tab" data-tab="settings" type="button"><span class="tab-icon">⚙</span><span>Réglages</span></button>
     </nav>
   </div>
 
+
+  <dialog id="importDialog" class="sheet-dialog import-dialog">
+    <form method="dialog">
+      <div class="dialog-handle"></div>
+      <div class="dialog-head"><div><p class="eyebrow">IMPORTATION SÉCURISÉE</p><h2>Vérifier la sauvegarde</h2></div><button class="round-button" value="cancel" type="button" id="closeImportBtn">×</button></div>
+      <div id="importSummary" class="import-summary"></div>
+      <p class="import-warning">Une copie de récupération de vos données actuelles sera créée avant le remplacement.</p>
+      <div class="dialog-actions"><button class="secondary-button" type="button" id="cancelImportBtn">Annuler</button><button class="primary-button" type="button" id="confirmImportBtn">Importer</button></div>
+    </form>
+  </dialog>
   <dialog id="editorDialog" class="sheet-dialog">
     <form id="editorForm" method="dialog">
       <div class="dialog-handle"></div>
@@ -151,6 +159,7 @@
       </div>
     </article>
   </template>
+  <script src="./storage.js" defer></script>
   <script src="./app.js" defer></script>
 </body>
 </html>

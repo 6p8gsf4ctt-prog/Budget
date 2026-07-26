@@ -1,16 +1,8 @@
-# Journal des modifications
+# Historique
 
-## V1.1.0 finale
-
-- stabilisation de la sauvegarde locale et validation de l’onglet actif ;
-- installation PWA guidée ;
-- stratégie de cache améliorée pour recevoir les mises à jour ;
-- métadonnées iPhone et thème sombre améliorés ;
-- documentation de livraison complète ;
-- vérifications de syntaxe, d’intégrité des ressources et de démarrage navigateur.
-
-## V1.0.8
-
-- plusieurs sources de revenus par budget ;
-- contributions distinctes pour le compte commun ;
-- migration des anciennes données.
+## 1.3.0
+- Suppression des alertes, classements et comparaisons globales.
+- Accueil centré sur deux espaces indépendants.
+- Ajout des natures Dépense, Épargne et Transfert.
+- Import JSON sécurisé avec validation, aperçu et sauvegarde préalable.
+- Migration automatique des sauvegardes antérieures.

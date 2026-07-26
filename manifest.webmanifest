@@ -1,7 +1,7 @@
 {
-  "name": "Mon Budget",
-  "short_name": "Mon Budget",
-  "description": "Gérez simplement votre budget personnel et votre compte commun, même hors connexion.",
+  "name": "Mon Organisation Financière",
+  "short_name": "Finances",
+  "description": "Photographie permanente de vos revenus, dépenses, épargne et transferts.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,8 +9,21 @@
   "theme_color": "#f3f4f6",
   "lang": "fr-FR",
   "icons": [
-    {"src":"./assets/icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"./assets/icon-512.png","sizes":"512x512","type":"image/png"},
-    {"src":"./assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
