@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f5f7">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mon Budget">
+  <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Deux espaces permanents pour gérer un budget personnel et un compte commun.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
@@ -21,7 +23,7 @@
         <p class="eyebrow" id="screenEyebrow">ESPACE PERSONNEL</p>
         <h1 id="screenTitle">Personnel</h1>
       </div>
-      <button id="quickEditBtn" class="round-button" type="button" aria-label="Modifier les revenus">•••</button>
+      <div class="topbar-actions"><button id="privacyBtn" class="round-button" type="button" aria-label="Masquer les montants">◉</button><button id="quickEditBtn" class="round-button" type="button" aria-label="Gérer les revenus">•••</button></div>
     </header>
 
     <main id="mainContent">
@@ -52,6 +54,12 @@
           </div>
         </section>
 
+        <section class="section-head income-section-head">
+          <div><p class="eyebrow">ENTRÉES</p><h2>Sources de revenus</h2></div>
+          <button id="addIncomeBtn" class="secondary-button compact-button" type="button">＋ Revenu</button>
+        </section>
+        <section id="incomeSourceList" class="income-source-list"></section>
+
         <section class="section-head">
           <div><p class="eyebrow">RÉPARTITION</p><h2>Enveloppes</h2></div>
           <button id="addEnvelopeBtn" class="primary-button" type="button">＋ Ajouter</button>
@@ -78,6 +86,11 @@
 
       <section id="settingsView" class="view">
         <section class="settings-card">
+          <p class="eyebrow">CONFIDENTIALITÉ</p>
+          <h2>Affichage</h2>
+          <button class="settings-row" data-action="privacy" type="button"><span><strong>Masquer les montants</strong><small id="privacyPreview">Désactivé</small></span><b id="privacySwitch" class="switch-indicator">○</b></button>
+        </section>
+        <section class="settings-card">
           <p class="eyebrow">ESPACES</p>
           <h2>Budgets permanents</h2>
           <button class="settings-row" data-action="rename-personal" type="button"><span><strong>Budget personnel</strong><small id="personalNamePreview">Personnel</small></span><b>›</b></button>
@@ -89,11 +102,16 @@
           <button class="settings-row" data-action="export" type="button"><span><strong>Exporter les données</strong><small>Créer un fichier de sauvegarde JSON</small></span><b>↓</b></button>
           <label class="settings-row file-row"><span><strong>Importer une sauvegarde</strong><small>Remplacer les données actuelles</small></span><b>↑</b><input id="importInput" type="file" accept="application/json,.json"></label>
         </section>
+        <section class="settings-card">
+          <p class="eyebrow">INSTALLATION</p>
+          <h2>Application</h2>
+          <button class="settings-row" data-action="install" type="button"><span><strong>Installer Mon Budget</strong><small>Ajouter l’application à votre appareil</small></span><b>＋</b></button>
+        </section>
         <section class="settings-card danger-zone">
           <p class="eyebrow">APPLICATION</p>
           <h2>Maintenance</h2>
           <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Restaurer les données d’exemple</small></span><b>↻</b></button>
-          <div class="version-row"><span>Mon Budget</span><strong>V1.0.7</strong></div>
+          <div class="version-row"><span>Mon Budget</span><strong>V1.1.0 · FINALE</strong></div>
         </section>
       </section>
     </main>
@@ -128,7 +146,7 @@
       <div class="envelope-body">
         <div class="progress-track"><div class="progress-fill"></div></div>
         <div class="metric-grid"><div><span>Budget</span><strong class="planned-value"></strong></div><div><span>Dépensé</span><strong class="spent-value"></strong></div><div><span>Écart</span><strong class="difference-value"></strong></div></div>
-        <div class="expense-header"><span class="expense-count"></span><div><button class="text-button edit-envelope" type="button">Modifier</button><button class="text-button add-expense" type="button">＋ Dépense</button></div></div>
+        <div class="order-tools"><span>ORDRE</span><button class="order-button move-up" type="button" aria-label="Monter">↑</button><button class="order-button move-down" type="button" aria-label="Descendre">↓</button></div><div class="expense-header"><span class="expense-count"></span><div><button class="text-button edit-envelope" type="button">Modifier</button><button class="text-button add-expense" type="button">＋ Dépense</button></div></div>
         <div class="expense-list"></div>
       </div>
     </article>

@@ -1,7 +1,7 @@
 {
   "name": "Mon Budget",
-  "short_name": "Budget",
-  "description": "Budgets permanents personnel et commun.",
+  "short_name": "Mon Budget",
+  "description": "Gérez simplement votre budget personnel et votre compte commun, même hors connexion.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
