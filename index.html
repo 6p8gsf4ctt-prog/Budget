@@ -59,6 +59,23 @@
         <section id="envelopeList" class="envelope-list"></section>
       </section>
 
+      <section id="analysisView" class="view" aria-live="polite">
+        <section class="analysis-hero">
+          <div><p class="eyebrow">RÉPARTITION GLOBALE</p><h2>Analyse des budgets</h2></div>
+          <div class="analysis-total-row"><span>Total engagé</span><strong id="analysisSpent">0,00 €</strong></div>
+          <div class="analysis-bar"><i id="analysisBar"></i></div>
+          <p id="analysisCaption" class="analysis-caption">Analyse de vos deux espaces permanents.</p>
+        </section>
+        <section class="analysis-grid">
+          <article class="analysis-card"><span class="analysis-icon">↗</span><small>TAUX D’ENGAGEMENT</small><strong id="commitmentRate">0 %</strong><p>Part des revenus affectée aux dépenses enregistrées.</p></article>
+          <article class="analysis-card"><span class="analysis-icon">◇</span><small>MARGE GLOBALE</small><strong id="globalMargin">0,00 €</strong><p>Somme encore disponible sur les deux espaces.</p></article>
+        </section>
+        <section class="section-head compact"><div><p class="eyebrow">PLUS GROS POSTES</p><h2>Enveloppes principales</h2></div></section>
+        <section id="topEnvelopeList" class="ranking-list"></section>
+        <section class="section-head compact"><div><p class="eyebrow">COMPARAISON</p><h2>Personnel et commun</h2></div></section>
+        <section id="spaceComparison" class="comparison-list"></section>
+      </section>
+
       <section id="settingsView" class="view">
         <section class="settings-card">
           <p class="eyebrow">ESPACES</p>
@@ -76,7 +93,7 @@
           <p class="eyebrow">APPLICATION</p>
           <h2>Maintenance</h2>
           <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Restaurer les données d’exemple</small></span><b>↻</b></button>
-          <div class="version-row"><span>Mon Budget</span><strong>V1.0.5</strong></div>
+          <div class="version-row"><span>Mon Budget</span><strong>V1.0.7</strong></div>
         </section>
       </section>
     </main>
@@ -85,6 +102,7 @@
       <button class="tab active" data-tab="overview" type="button"><span class="tab-icon">◫</span><span>Accueil</span></button>
       <button class="tab" data-tab="personal" type="button"><span class="tab-icon">⌂</span><span>Personnel</span></button>
       <button class="tab" data-tab="shared" type="button"><span class="tab-icon">♧</span><span>Compte commun</span></button>
+      <button class="tab" data-tab="analysis" type="button"><span class="tab-icon">⌁</span><span>Analyse</span></button>
       <button class="tab" data-tab="settings" type="button"><span class="tab-icon">⚙</span><span>Réglages</span></button>
     </nav>
   </div>
