@@ -1,14 +1,13 @@
-# Mon Organisation Financière — V1.3.0
+# Mon organisation financière — V1.4.0
 
-Application PWA de budget permanent avec deux espaces strictement séparés : Personnel et Compte commun.
+Application PWA sombre présentant une photographie permanente des rentrées et sorties d’argent.
 
 ## Principes
-- aucune gestion mensuelle ;
-- aucune alerte ou comparaison entre espaces ;
-- enveloppes classées en Dépense, Épargne ou Transfert ;
-- import compatible avec les sauvegardes JSON des versions précédentes ;
-- aperçu et copie de récupération avant import ;
-- stockage IndexedDB et fonctionnement hors connexion.
+- aucune notion de budget prévu, d’écart, de mois ou d’alerte ;
+- calcul unique : rentrées − sorties = disponible ;
+- espaces Personnel et Compte commun strictement séparés ;
+- import JSON compatible avec les sauvegardes des versions antérieures ;
+- IndexedDB, copies locales automatiques et export JSON.
 
 ## Publication
-Copiez tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.
+Copier tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.
