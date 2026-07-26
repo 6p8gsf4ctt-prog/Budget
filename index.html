@@ -25,7 +25,19 @@
     </header>
 
     <main id="mainContent">
-      <section id="budgetView" class="view active" aria-live="polite">
+      <section id="overviewView" class="view active" aria-live="polite">
+        <section class="overview-hero">
+          <p class="eyebrow">VUE D’ENSEMBLE</p>
+          <h2>Vos deux budgets</h2>
+          <strong id="combinedAvailable" class="overview-total">0,00 €</strong>
+          <span id="overviewMessage" class="overview-message">Situation globale</span>
+        </section>
+        <section id="spaceOverviewCards" class="overview-grid"></section>
+        <section class="section-head compact"><div><p class="eyebrow">À SURVEILLER</p><h2>Alertes</h2></div></section>
+        <section id="alertList" class="alert-list"></section>
+      </section>
+
+      <section id="budgetView" class="view" aria-live="polite">
         <section class="hero-card">
           <div class="hero-copy">
             <span class="hero-label">Disponible</span>
@@ -64,13 +76,14 @@
           <p class="eyebrow">APPLICATION</p>
           <h2>Maintenance</h2>
           <button class="settings-row" data-action="reset" type="button"><span><strong>Réinitialiser l’application</strong><small>Restaurer les données d’exemple</small></span><b>↻</b></button>
-          <div class="version-row"><span>Mon Budget</span><strong>V1.0.4</strong></div>
+          <div class="version-row"><span>Mon Budget</span><strong>V1.0.5</strong></div>
         </section>
       </section>
     </main>
 
     <nav class="tabbar" aria-label="Navigation principale">
-      <button class="tab active" data-tab="personal" type="button"><span class="tab-icon">⌂</span><span>Personnel</span></button>
+      <button class="tab active" data-tab="overview" type="button"><span class="tab-icon">◫</span><span>Accueil</span></button>
+      <button class="tab" data-tab="personal" type="button"><span class="tab-icon">⌂</span><span>Personnel</span></button>
       <button class="tab" data-tab="shared" type="button"><span class="tab-icon">♧</span><span>Compte commun</span></button>
       <button class="tab" data-tab="settings" type="button"><span class="tab-icon">⚙</span><span>Réglages</span></button>
     </nav>
