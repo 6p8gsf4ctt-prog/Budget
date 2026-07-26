@@ -1,16 +1,16 @@
 {
-  "name": "Mon Budget",
-  "short_name": "Budget",
-  "description": "Gestion personnelle du budget mensuel",
+  "name": "Mes habitudes",
+  "short_name": "Habitudes",
+  "description": "Suivi quotidien d'un nombre illimité d'habitudes.",
   "lang": "fr-FR",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#07090d",
-  "theme_color": "#0b0d12",
+  "background_color": "#f6f7fb",
+  "theme_color": "#3457d5",
   "icons": [
-    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
