@@ -1,17 +1,15 @@
-# Mon Finances — V2.0.0
+# Mon organisation financière — V2.1.0
 
-Application PWA de photographie financière personnelle, de compte commun et de trésorerie à moyen terme.
+PWA personnelle avec finances, prévisions et investissements.
 
-## Nouveautés V2
+## Nouveautés
+- Identité visuelle unifiée.
+- Onglet Investissements.
+- Portefeuilles Trade Republic, SwissBorg, MERIA, Crypto.com et Bourse Direct.
+- Import direct de relevés CSV et Excel.
+- Détection automatique des formats SwissBorg, Crypto.com et MERIA.
+- Historique des imports.
+- Import des sauvegardes JSON des versions précédentes.
 
-- identité visuelle unifiée dans tous les onglets ;
-- une seule couleur d’accent bleue ;
-- vert et rouge réservés aux résultats réellement positifs ou négatifs ;
-- cartes, listes, boutons, espacements et typographie harmonisés ;
-- import compatible avec les sauvegardes JSON des versions précédentes ;
-- migration automatique vers le format V2 ;
-- sauvegarde locale IndexedDB et export JSON.
-
-## Déploiement
-
-Copier tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.
+## Important
+Certains exports fournis par les plateformes sont des historiques de transactions et non des relevés de valorisation. L’application calcule les quantités détectées. La valeur actuelle en euros peut être saisie lors de l’import ou modifiée sur chaque portefeuille.
