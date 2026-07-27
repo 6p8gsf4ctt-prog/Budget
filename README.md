@@ -1,11 +1,10 @@
-# Mon organisation financière — V1.5.1
+# Mon organisation financière — V1.5.2
 
-Application PWA de photographie financière et de trésorerie prévisionnelle.
+Application PWA sombre pour visualiser les rentrées, sorties et la trésorerie à moyen terme.
 
-## Onglet À venir prérempli
-- Paiements : 3 586 €
-- Encaissements : 843 €
-- Impact net : −2 743 €
-- Épargne tampon : objectif 5 000 €
+La vue À venir affiche désormais directement :
+- la réserve actuelle ;
+- l’impact net des opérations à venir ;
+- le solde provisoire après ces opérations.
 
-Les données existantes des versions précédentes sont conservées. Si l’onglet À venir est encore vide lors de la migration, les opérations fournies sont ajoutées une seule fois.
+Les sauvegardes JSON des versions précédentes restent importables.
