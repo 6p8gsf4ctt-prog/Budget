@@ -1,8 +1,9 @@
-# Version 1.5.0
+# Journal des modifications
 
-- Nouvel onglet À venir.
-- Paiements à venir et encaissements attendus.
-- Dates et états prévu, confirmé ou terminé.
-- Épargne tampon avec objectif et solde actuel.
-- Calcul automatique du besoin prévisionnel sur la réserve.
-- Import des anciennes sauvegardes JSON sans perte de données.
+## 1.5.1
+- Préremplissage de l’onglet À venir avec les 10 paiements (3 586 €) et 4 encaissements (843 €) transmis.
+- Migration automatique sans perte des données Personnel et Compte commun.
+- Sauvegardes sérialisées pour éviter les écritures concurrentes.
+- Sauvegarde forcée lors de la fermeture ou mise en arrière-plan.
+- Enregistrement explicite du service worker et cache actualisé.
+- Réinitialisation locale plus fiable.

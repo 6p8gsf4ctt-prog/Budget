@@ -1,13 +1,11 @@
-# Mon organisation financière — V1.5.0
+# Mon organisation financière — V1.5.1
 
-Application PWA sombre présentant une photographie permanente des rentrées et sorties d’argent.
+Application PWA de photographie financière et de trésorerie prévisionnelle.
 
-## Principes
-- aucune notion de budget prévu, d’écart, de mois ou d’alerte ;
-- calcul unique : rentrées − sorties = disponible ;
-- espaces Personnel et Compte commun strictement séparés ;
-- import JSON compatible avec les sauvegardes des versions antérieures ;
-- IndexedDB, copies locales automatiques et export JSON.
+## Onglet À venir prérempli
+- Paiements : 3 586 €
+- Encaissements : 843 €
+- Impact net : −2 743 €
+- Épargne tampon : objectif 5 000 €
 
-## Publication
-Copier tous les fichiers de ce dossier à la racine du dépôt GitHub Pages.
+Les données existantes des versions précédentes sont conservées. Si l’onglet À venir est encore vide lors de la migration, les opérations fournies sont ajoutées une seule fois.
