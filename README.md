@@ -1,4 +1,4 @@
-# Mon organisation financière — V1.4.0
+# Mon organisation financière — V1.5.0
 
 Application PWA sombre présentant une photographie permanente des rentrées et sorties d’argent.
 
