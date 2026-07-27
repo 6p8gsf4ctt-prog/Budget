@@ -1,8 +1,12 @@
-# V2.1.0 — reconstruction corrigée
+# Historique
 
-- SwissBorg : calcul du solde net actuel par actif (achats, dépôts et rendements moins ventes et retraits).
-- Suppression automatique des actifs vendus, transférés ou réduits à une poussière sans valeur.
-- Import multi-fichiers regroupé par plateforme au lieu d’écraser les fichiers précédents du même import.
-- Présentation uniforme : symbole, quantité actuelle et valeur en dollars.
-- Valorisation automatique en dollars lorsque le cours est disponible, avec valeur de repli issue du relevé.
-- Import des anciennes sauvegardes JSON conservé.
+## 2.2.0 — Interface unifiée
+
+- Nouvelle identité visuelle sobre et cohérente sur tous les écrans.
+- Palette unique bleu, gris et noir.
+- Réduction des cartes imbriquées au profit de listes unifiées.
+- Accueil et résumés financiers plus compacts.
+- Typographie, espacements, boutons et dialogues harmonisés.
+- Icônes monochromes communes aux cinq onglets.
+- Import des sauvegardes JSON précédentes conservé.
+- Aucune donnée d’investissement affichée ou utilisée.

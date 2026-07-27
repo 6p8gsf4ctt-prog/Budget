@@ -1,15 +1,23 @@
-# Mon organisation financière — V2.1.0
+# Mon organisation financière — V2.2.0
 
-PWA personnelle avec finances, prévisions et investissements.
+PWA personnelle de gestion financière, sans logique de budget mensuel.
 
-## Nouveautés
-- Identité visuelle unifiée.
-- Onglet Investissements.
-- Portefeuilles Trade Republic, SwissBorg, MERIA, Crypto.com et Bourse Direct.
-- Import direct de relevés CSV et Excel.
-- Détection automatique des formats SwissBorg, Crypto.com et MERIA.
-- Historique des imports.
-- Import des sauvegardes JSON des versions précédentes.
+## Navigation
 
-## Important
-Certains exports fournis par les plateformes sont des historiques de transactions et non des relevés de valorisation. L’application calcule les quantités détectées. La valeur actuelle en euros peut être saisie lors de l’import ou modifiée sur chaque portefeuille.
+- Accueil
+- Personnel
+- Commun
+- À venir
+- Réglages
+
+## V2.2 — Interface unifiée
+
+- identité visuelle unique dans tous les onglets ;
+- hiérarchie typographique renforcée ;
+- cartes principales plus lisibles et listes plus plates ;
+- symboles monochromes cohérents ;
+- navigation et formulaires harmonisés ;
+- conservation intégrale de l’import JSON des versions précédentes ;
+- absence de l’onglet Investissements.
+
+Les données restent enregistrées dans IndexedDB avec une copie miroir locale et des instantanés automatiques.

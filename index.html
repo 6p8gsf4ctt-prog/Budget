@@ -1,15 +1,228 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080b12"><title>Mon organisation financière</title><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./assets/icon-180.png"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script></head><body>
-<div class="app-shell"><header><div><small id="screenEyebrow">VUE D’ENSEMBLE</small><h1 id="screenTitle">Accueil</h1></div><button id="privacyBtn" class="icon-button" aria-label="Masquer les montants">◉</button></header>
-<main>
-<section id="overviewView" class="view active"><div id="overviewCards" class="overview-grid"></div><div id="investmentHomeCard"></div><section class="status-card"><span>✓</span><div><strong>Données enregistrées</strong><small id="lastSavedHome">Sauvegarde automatique active</small></div></section></section>
-<section id="spaceView" class="view"><section class="hero-card"><small>Disponible</small><strong id="availableAmount">0,00 €</strong><div class="hero-grid"><div><small>Rentrées</small><b id="incomeAmount">0,00 €</b></div><div><small>Sorties</small><b id="outgoingAmount">0,00 €</b></div></div></section><section class="section"><div class="section-head"><h2>Rentrées</h2><button id="addIncomeBtn">＋</button></div><div id="incomeSourceList" class="list"></div></section><section class="section"><div class="section-head"><h2>Postes financiers</h2><button id="addEnvelopeBtn">＋</button></div><div id="envelopeList" class="list"></div></section></section>
-<section id="futureView" class="view"><section id="forecastSummary" class="hero-card"></section><section class="section"><div class="section-head"><h2>Paiements futurs</h2><button id="addPaymentBtn">＋</button></div><div id="paymentList" class="list"></div></section><section class="section"><div class="section-head"><h2>Encaissements attendus</h2><button id="addReceiptBtn">＋</button></div><div id="receiptList" class="list"></div></section><button id="toggleCompletedBtn" class="secondary-button">Afficher les opérations terminées</button><div id="completedList" class="list completed"></div></section>
-<section id="investmentsView" class="view"><section class="hero-card investment-hero"><small>Valeur totale actuelle</small><strong id="investmentTotal">0,00 €</strong><div class="hero-grid"><div><small>Portefeuilles</small><b id="accountCount">0</b></div><div><small>Dernière mise à jour</small><b id="investmentUpdated">—</b></div></div></section><div class="import-panel"><label class="primary-button file-button">Importer des relevés<input id="statementInput" type="file" multiple accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><small>CSV ou Excel · plusieurs fichiers possibles</small></div><section class="section"><div class="section-head"><h2>Portefeuilles</h2><button id="addInvestmentAccountBtn">＋</button></div><div id="investmentAccounts" class="list"></div></section><section class="section"><div class="section-head"><h2>Historique des imports</h2></div><div id="importHistory" class="list"></div></section></section>
-<section id="settingsView" class="view"><section class="settings-group"><h2>Données</h2><label class="settings-row"><span><strong>Importer une sauvegarde</strong><small>Compatible avec les anciennes versions</small></span><b>↑</b><input id="importInput" type="file" accept=".json,application/json"></label><button class="settings-row" data-action="export"><span><strong>Exporter une sauvegarde</strong><small>Finances et investissements</small></span><b>↓</b></button><button class="settings-row" data-action="restore"><span><strong>Restaurer une copie locale</strong><small>Dernier instantané disponible</small></span><b>↶</b></button></section><section class="settings-group"><h2>Prévision</h2><button class="settings-row" data-action="buffer"><span><strong>Épargne tampon</strong><small id="bufferTargetPreview">5 000,00 €</small></span><b>›</b></button></section><section class="settings-group"><h2>Affichage</h2><button class="settings-row" data-action="privacy"><span><strong>Masquer les montants</strong><small id="privacyPreview">Désactivé</small></span><b>◉</b></button></section><section class="settings-group"><h2>Stockage</h2><div class="settings-row static"><span><strong>Dernière sauvegarde</strong><small id="lastSavedPreview">—</small></span><b>✓</b></div><button class="settings-row danger" data-action="reset"><span><strong>Réinitialiser l’application</strong><small>Efface les données locales</small></span><b>↻</b></button><div class="version">Version 2.1.0</div></section></section>
-</main>
-<nav class="tabbar"><button class="tab active" data-tab="overview"><span>⌂</span><small>Accueil</small></button><button class="tab" data-tab="personal"><span>●</span><small>Personnel</small></button><button class="tab" data-tab="shared"><span>●●</span><small>Commun</small></button><button class="tab" data-tab="future"><span>□</span><small>À venir</small></button><button class="tab" data-tab="investments"><span>↗</span><small>Investir</small></button><button class="tab" data-tab="settings"><span>⚙</span><small>Réglages</small></button></nav></div>
-<template id="postTemplate"><article class="card expandable"><button class="row post-summary"><span class="avatar post-icon">•</span><span class="copy post-copy"><strong></strong><small></small></span><b class="post-amount"></b></button><div class="details"><div class="detail-actions"><button class="edit-post secondary-button">Modifier</button><button class="add-expense primary-button">Ajouter une ligne</button></div><div class="expense-list"></div></div></article></template>
-<dialog id="editorDialog"><form id="editorForm" method="dialog"><div class="dialog-head"><div><small id="dialogEyebrow"></small><h2 id="dialogTitle"></h2></div><button id="closeDialogBtn" type="button">×</button></div><div id="editorFields"></div><div id="deleteArea"></div><div class="dialog-actions"><button id="cancelDialogBtn" type="button" class="secondary-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
-<dialog id="statementDialog"><div class="dialog-head"><div><small>IMPORT DES RELEVÉS</small><h2>Vérifier les fichiers</h2></div><button id="closeStatementBtn">×</button></div><div id="statementSummary"></div><div class="valuation-box"><label>Valeur totale actuelle en dollars <small>Facultatif · remplace la valorisation automatique</small><input id="statementValuation" type="number" min="0" step="0.01" inputmode="decimal"></label></div><div class="dialog-actions"><button id="cancelStatementBtn" class="secondary-button">Annuler</button><button id="confirmStatementBtn" class="primary-button">Importer</button></div></dialog>
-<dialog id="importDialog"><div class="dialog-head"><div><small>SAUVEGARDE</small><h2>Confirmer l’import</h2></div><button id="closeImportBtn">×</button></div><div id="importSummary"></div><div class="dialog-actions"><button id="cancelImportBtn" class="secondary-button">Annuler</button><button id="confirmImportBtn" class="primary-button">Restaurer</button></div></dialog>
-<script src="./storage.js" defer></script><script src="./app.js" defer></script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090a0c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Finances">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="stylesheet" href="./style.css">
+  <title>Mon organisation financière</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-copy">
+        <p class="eyebrow" id="screenEyebrow">VUE D’ENSEMBLE</p>
+        <h1 id="screenTitle">Accueil</h1>
+      </div>
+      <button id="privacyBtn" class="icon-button" type="button" aria-label="Masquer les montants">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></svg>
+      </button>
+    </header>
+
+    <main>
+      <section id="overviewView" class="view active">
+        <div id="overviewCards" class="overview-cards"></div>
+        <section class="save-status" aria-live="polite">
+          <span class="status-mark">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 12.5 3.2 3.2L17.5 8.5"/></svg>
+          </span>
+          <div>
+            <strong>Données enregistrées</strong>
+            <small id="lastSavedHome">Sauvegarde automatique active</small>
+          </div>
+        </section>
+      </section>
+
+      <section id="spaceView" class="view">
+        <section class="balance-card hero-card">
+          <span class="hero-label">Disponible</span>
+          <strong id="availableAmount">0,00 €</strong>
+          <p id="balanceFormula">Rentrées − sorties</p>
+          <div class="balance-grid">
+            <div><small>Rentrées</small><b id="incomeAmount">0,00 €</b></div>
+            <div><small>Sorties</small><b id="outgoingAmount">0,00 €</b></div>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <div><p class="eyebrow">RENTRÉES D’ARGENT</p><h2>Sources</h2></div>
+          <button id="addIncomeBtn" class="add-button" type="button" aria-label="Ajouter une rentrée">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <section id="incomeSourceList" class="simple-list list-surface"></section>
+
+        <div class="section-title">
+          <div><p class="eyebrow">ORGANISATION</p><h2>Postes financiers</h2></div>
+          <button id="addEnvelopeBtn" class="add-button" type="button" aria-label="Ajouter un poste">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <section id="envelopeList" class="post-list list-surface"></section>
+      </section>
+
+      <section id="futureView" class="view">
+        <section class="balance-card future-balance-card hero-card">
+          <div class="future-card-head">
+            <div><span class="hero-label">Solde provisoire</span><strong id="forecastProvisional">0,00 €</strong></div>
+            <button id="editBufferBtn" class="text-button compact-action" type="button">Modifier</button>
+          </div>
+          <div class="future-reserve-line"><span>Réserve actuelle</span><b id="bufferCurrent">0,00 €</b></div>
+          <div class="buffer-track" aria-hidden="true"><i id="bufferProgress"></i></div>
+          <div class="future-metrics">
+            <div><small>Encaissements</small><b id="forecastIncome">0,00 €</b></div>
+            <div><small>Paiements</small><b id="forecastPayments">0,00 €</b></div>
+            <div><small>Impact net</small><b id="forecastNet">0,00 €</b></div>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <div><p class="eyebrow">SORTIES PRÉVUES</p><h2>Paiements</h2></div>
+          <button id="addPaymentBtn" class="add-button" type="button" aria-label="Ajouter un paiement">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <section id="paymentList" class="future-list list-surface"></section>
+
+        <div class="section-title">
+          <div><p class="eyebrow">RENTRÉES ATTENDUES</p><h2>Encaissements</h2></div>
+          <button id="addReceiptBtn" class="add-button" type="button" aria-label="Ajouter un encaissement">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <section id="receiptList" class="future-list list-surface"></section>
+
+        <section id="completedSection" class="completed-section">
+          <button id="toggleCompletedBtn" class="completed-toggle" type="button">Afficher les opérations terminées</button>
+          <div id="completedList" class="future-list list-surface"></div>
+        </section>
+      </section>
+
+      <section id="settingsView" class="view settings-view">
+        <section class="settings-group">
+          <h2>Données</h2>
+          <div class="settings-card">
+            <label class="settings-row file-row">
+              <span class="settings-copy"><strong>Importer une sauvegarde</strong><small>Compatible avec les versions précédentes</small></span>
+              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 17V4m0 0L7 9m5-5 5 5M5 19v1h14v-1"/></svg></span>
+              <input id="importInput" type="file" accept="application/json,.json">
+            </label>
+            <button class="settings-row" data-action="export">
+              <span class="settings-copy"><strong>Exporter une sauvegarde</strong><small>Créer un fichier JSON</small></span>
+              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v13m0 0 5-5m-5 5-5-5M5 20h14"/></svg></span>
+            </button>
+            <button class="settings-row" data-action="restore">
+              <span class="settings-copy"><strong>Restaurer une copie locale</strong><small>Revenir à une sauvegarde automatique</small></span>
+              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7v5h5M6 11a7 7 0 1 1 1 6"/></svg></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-group">
+          <h2>Prévision</h2>
+          <div class="settings-card">
+            <button class="settings-row" data-action="buffer">
+              <span class="settings-copy"><strong>Objectif de l’épargne tampon</strong><small id="bufferTargetPreview">5 000,00 €</small></span>
+              <span class="row-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-group">
+          <h2>Affichage</h2>
+          <div class="settings-card">
+            <button class="settings-row" data-action="privacy">
+              <span class="settings-copy"><strong>Masquer les montants</strong><small id="privacyPreview">Désactivé</small></span>
+              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.2A9 9 0 0 1 12 6c6 0 9.5 6 9.5 6a14.8 14.8 0 0 1-2.3 3M7.2 7.3C4.2 9 2.5 12 2.5 12s3.5 6 9.5 6c1 0 1.9-.2 2.7-.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></span>
+            </button>
+            <button class="settings-row" data-action="rename-personal">
+              <span class="settings-copy"><strong>Nom de l’espace personnel</strong><small id="personalNamePreview">Personnel</small></span>
+              <span class="row-chevron">›</span>
+            </button>
+            <button class="settings-row" data-action="rename-shared">
+              <span class="settings-copy"><strong>Nom du compte commun</strong><small id="sharedNamePreview">Compte commun</small></span>
+              <span class="row-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-group">
+          <h2>Stockage</h2>
+          <div class="settings-card">
+            <div class="settings-row static">
+              <span class="settings-copy"><strong>Dernière sauvegarde</strong><small id="lastSavedPreview">—</small></span>
+              <span class="row-icon success"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 12.5 3.5 3.5L18 7.5"/></svg></span>
+            </div>
+            <button class="settings-row danger" data-action="reset">
+              <span class="settings-copy"><strong>Réinitialiser l’application</strong><small>Efface toutes les données locales</small></span>
+              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7v5h5M5.5 11a7 7 0 1 1 1.3 6.2"/></svg></span>
+            </button>
+            <div class="version">Version 2.2.0</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="Navigation principale">
+      <button class="tab active" data-tab="overview"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7v9h-5v-6H9v6H4Z"/></svg><small>Accueil</small></button>
+      <button class="tab" data-tab="personal"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"/></svg><small>Personnel</small></button>
+      <button class="tab" data-tab="shared"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><circle cx="16.5" cy="9.5" r="2.5"/><path d="M3.5 20c.5-4 2.4-6 5.5-6s5 2 5.5 6M14 14.8c3.5-.4 5.6 1.3 6.1 5.2"/></svg><small>Commun</small></button>
+      <button class="tab" data-tab="future"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M13 14h3"/></svg><small>À venir</small></button>
+      <button class="tab" data-tab="settings"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-5l-.4 3.1a8 8 0 0 0-1.7 1L5 6.1 3 9.5 5 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.4 3.1h5l.4-3.1a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 0-1Z"/></svg><small>Réglages</small></button>
+    </nav>
+  </div>
+
+  <dialog id="editorDialog">
+    <form id="editorForm">
+      <div class="sheet-handle"></div>
+      <div class="dialog-head">
+        <div><p class="eyebrow" id="dialogEyebrow">MODIFICATION</p><h2 id="dialogTitle">Modifier</h2></div>
+        <button id="closeDialogBtn" class="icon-button dialog-close" type="button" aria-label="Fermer">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+        </button>
+      </div>
+      <div id="editorFields" class="form-fields"></div>
+      <div id="deleteArea"></div>
+      <div class="dialog-actions"><button id="cancelDialogBtn" class="secondary" type="button">Annuler</button><button class="primary" type="submit">Enregistrer</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="importDialog">
+    <form>
+      <div class="sheet-handle"></div>
+      <div class="dialog-head">
+        <div><p class="eyebrow">IMPORTATION</p><h2>Vérifier la sauvegarde</h2></div>
+        <button id="closeImportBtn" class="icon-button dialog-close" type="button" aria-label="Fermer">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+        </button>
+      </div>
+      <div id="importSummary" class="import-summary"></div>
+      <p class="warning">Une copie locale de l’état actuel sera créée avant l’import.</p>
+      <div class="dialog-actions"><button id="cancelImportBtn" class="secondary" type="button">Annuler</button><button id="confirmImportBtn" class="primary" type="button">Importer</button></div>
+    </form>
+  </dialog>
+
+  <template id="postTemplate">
+    <article class="post-card">
+      <button class="post-summary" type="button">
+        <span class="post-icon"></span>
+        <span class="post-copy"><strong></strong><small></small></span>
+        <b class="post-amount"></b>
+        <span class="chevron">›</span>
+      </button>
+      <div class="post-body">
+        <div class="post-actions"><button class="text-button edit-post" type="button">Modifier</button><button class="text-button add-expense" type="button">Ajouter une ligne</button></div>
+        <div class="expense-list"></div>
+      </div>
+    </article>
+  </template>
+
+  <script src="./storage.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
