@@ -1,7 +1,10 @@
-# V1.5.3
+# Journal des modifications
 
-- Refonte visuelle complète de l’onglet À venir.
-- Carte de synthèse alignée sur le composant Disponible des autres espaces.
-- Listes Paiements et Encaissements harmonisées avec les postes financiers.
-- Typographie, rayons, bordures, espacements et animations uniformisés.
-- Données et sauvegardes des versions précédentes conservées.
+## 2.0.0
+
+- refonte complète de l’identité visuelle ;
+- palette unifiée : bleu d’accent, blanc pour les montants, vert/rouge sémantiques ;
+- harmonisation des cartes Accueil, Personnel, Compte commun et À venir ;
+- harmonisation des boutons, listes, formulaires et navigation ;
+- conservation de toutes les données et import des sauvegardes antérieures ;
+- mise à jour du cache PWA.
