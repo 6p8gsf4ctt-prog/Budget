@@ -1,5 +1,5 @@
 'use strict';
-const VERSION='1.5.1',money=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}),uid=()=>crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;
+const VERSION='1.5.3',money=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}),uid=()=>crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;
 const incomeSource=(label,amount)=>({id:uid(),label,amount}),expense=(label,amount)=>({id:uid(),label,amount}),post=(name,description,icon,expenses=[],type='expense')=>({id:uid(),name,description,icon,color:'#0a84ff',planned:0,expenses,type});
 const forecastItem=(kind,label,amount)=>({id:uid(),kind,label,amount,date:'',status:'planned',source:'current'});
 const defaultForecastItems=()=>[

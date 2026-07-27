@@ -1,8 +1,7 @@
-# Journal des modifications
+# V1.5.3
 
-## 1.5.2
-- Fusion de la trésorerie prévisionnelle et de l’épargne tampon en une seule carte.
-- Ajout d’un solde provisoire calculé : réserve actuelle + encaissements − paiements.
-- Suppression des explications redondantes.
-- Jauge basée sur le solde provisoire restant.
+- Refonte visuelle complète de l’onglet À venir.
+- Carte de synthèse alignée sur le composant Disponible des autres espaces.
+- Listes Paiements et Encaissements harmonisées avec les postes financiers.
+- Typographie, rayons, bordures, espacements et animations uniformisés.
 - Données et sauvegardes des versions précédentes conservées.

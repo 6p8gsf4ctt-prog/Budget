@@ -1,10 +1,3 @@
-# Mon organisation financière — V1.5.2
+# Mon Finances — V1.5.3
 
-Application PWA sombre pour visualiser les rentrées, sorties et la trésorerie à moyen terme.
-
-La vue À venir affiche désormais directement :
-- la réserve actuelle ;
-- l’impact net des opérations à venir ;
-- le solde provisoire après ces opérations.
-
-Les sauvegardes JSON des versions précédentes restent importables.
+Version de cohérence visuelle. L’onglet À venir reprend désormais les mêmes composants, cartes, espacements et proportions que les écrans Accueil, Personnel et Compte commun.
