@@ -2,227 +2,258 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#090a0c">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Finances">
+  <meta name="apple-mobile-web-app-title" content="Budget">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="icon" href="./assets/icon-192.png">
   <link rel="stylesheet" href="./style.css">
-  <title>Mon organisation financière</title>
+  <title>Budget</title>
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
-      <div class="topbar-copy">
-        <p class="eyebrow" id="screenEyebrow">VUE D’ENSEMBLE</p>
-        <h1 id="screenTitle">Accueil</h1>
+    <header class="app-header" id="appHeader">
+      <div class="header-copy">
+        <h1 id="screenTitle">Synthèse</h1>
+        <p id="screenSubtitle">Période en cours</p>
       </div>
-      <button id="privacyBtn" class="icon-button" type="button" aria-label="Masquer les montants">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></svg>
-      </button>
+      <div class="header-actions">
+        <button id="privacyBtn" class="circle-button" type="button" aria-label="Masquer les montants"></button>
+        <button id="quickAddBtn" class="circle-button primary-circle" type="button" aria-label="Ajouter une opération"></button>
+      </div>
     </header>
 
-    <main>
-      <section id="overviewView" class="view active">
-        <div id="overviewCards" class="overview-cards"></div>
-        <section class="save-status" aria-live="polite">
-          <span class="status-mark">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 12.5 3.2 3.2L17.5 8.5"/></svg>
-          </span>
-          <div>
-            <strong>Données enregistrées</strong>
-            <small id="lastSavedHome">Sauvegarde automatique active</small>
+    <main id="mainContent">
+      <section id="summaryView" class="view active" aria-labelledby="screenTitle">
+        <article class="hero-card summary-hero">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <p class="card-label">Disponible</p>
+          <p id="summaryAvailable" class="hero-amount">0,00 €</p>
+          <p id="summaryBudgetCaption" class="hero-caption">Sur un budget de 0,00 €</p>
+          <div class="progress-track" aria-hidden="true"><i id="summaryBudgetProgress"></i></div>
+          <p id="summaryProgressText" class="progress-description">Aucune dépense enregistrée</p>
+          <div class="metric-grid two-columns">
+            <div class="metric"><span>Revenus reçus</span><strong id="summaryIncome" class="financial-positive">0,00 €</strong></div>
+            <div class="metric"><span>Déjà dépensé</span><strong id="summarySpent">0,00 €</strong></div>
           </div>
+        </article>
+
+        <section class="period-panel" aria-label="Progression de la période">
+          <div class="section-heading compact-heading">
+            <div><p class="section-kicker">PÉRIODE</p><h2>Progression</h2></div>
+            <strong id="periodPercent">0 %</strong>
+          </div>
+          <div class="period-track" aria-hidden="true"><i id="periodProgress"></i></div>
+          <div class="period-labels"><span id="periodStartLabel">Début</span><span id="periodEndLabel">Fin</span></div>
         </section>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">RÉPARTITION</p><h2>Catégories principales</h2></div>
+            <button class="text-action" type="button" data-nav="budget">Tout afficher</button>
+          </div>
+          <div id="summaryCategories" class="ios-list"></div>
+        </section>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">ÉCHÉANCES</p><h2>Prochainement</h2></div>
+            <button class="text-action" type="button" data-nav="future">Voir la chronologie</button>
+          </div>
+          <div id="summaryUpcoming" class="ios-list"></div>
+        </section>
+
+        <article class="forecast-card">
+          <div class="forecast-icon" id="summaryForecastIcon"></div>
+          <div class="forecast-copy">
+            <span>Solde estimé en fin de période</span>
+            <strong id="summaryForecast">0,00 €</strong>
+            <small id="summaryForecastDetail">Prévisions incluses</small>
+          </div>
+        </article>
+
+        <section class="data-status" data-status-card aria-live="polite"></section>
       </section>
 
-      <section id="spaceView" class="view">
-        <section class="balance-card hero-card">
-          <span class="hero-label">Disponible</span>
-          <strong id="availableAmount">0,00 €</strong>
-          <p id="balanceFormula">Rentrées − sorties</p>
-          <div class="balance-grid">
-            <div><small>Rentrées</small><b id="incomeAmount">0,00 €</b></div>
-            <div><small>Sorties</small><b id="outgoingAmount">0,00 €</b></div>
+      <section id="budgetView" class="view" aria-labelledby="screenTitle">
+        <div class="segmented-control" id="spaceSegment" role="group" aria-label="Espace budgétaire">
+          <button type="button" data-space="personal" aria-label="Afficher le budget personnel"></button>
+          <button type="button" data-space="shared" aria-label="Afficher le budget commun"></button>
+        </div>
+
+        <article class="hero-card budget-hero">
+          <div class="budget-hero-head">
+            <div><p class="card-label">Montant restant</p><p id="budgetAvailable" class="hero-amount medium">0,00 €</p></div>
+            <div id="budgetSpaceIcon" class="large-icon-container" aria-hidden="true"></div>
           </div>
+          <div class="metric-grid three-columns">
+            <div class="metric"><span>Prévu</span><strong id="budgetPlanned">0,00 €</strong></div>
+            <div class="metric"><span>Utilisé</span><strong id="budgetUsed">0,00 €</strong></div>
+            <div class="metric"><span>Revenus</span><strong id="budgetIncome" class="financial-positive">0,00 €</strong></div>
+          </div>
+        </article>
+
+        <section class="content-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">REVENUS</p><h2>Sources de la période</h2></div>
+            <button id="addIncomeBtn" class="small-circle-button" type="button" aria-label="Ajouter un revenu"></button>
+          </div>
+          <div id="incomeSourceList" class="ios-list"></div>
         </section>
 
-        <div class="section-title">
-          <div><p class="eyebrow">RENTRÉES D’ARGENT</p><h2>Sources</h2></div>
-          <button id="addIncomeBtn" class="add-button" type="button" aria-label="Ajouter une rentrée">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </div>
-        <section id="incomeSourceList" class="simple-list list-surface"></section>
+        <section class="content-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">ENVELOPPES</p><h2>Catégories</h2></div>
+            <button id="addCategoryBtn" class="small-circle-button" type="button" aria-label="Ajouter une catégorie"></button>
+          </div>
+          <div id="categoryList" class="category-list"></div>
+        </section>
 
-        <div class="section-title">
-          <div><p class="eyebrow">ORGANISATION</p><h2>Postes financiers</h2></div>
-          <button id="addEnvelopeBtn" class="add-button" type="button" aria-label="Ajouter un poste">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </div>
-        <section id="envelopeList" class="post-list list-surface"></section>
+        <section class="data-status" data-status-card aria-live="polite"></section>
       </section>
 
-      <section id="futureView" class="view">
-        <section class="balance-card future-balance-card hero-card">
-          <div class="future-card-head">
-            <div><span class="hero-label">Solde provisoire</span><strong id="forecastProvisional">0,00 €</strong></div>
-            <button id="editBufferBtn" class="text-button compact-action" type="button">Modifier</button>
+      <section id="futureView" class="view" aria-labelledby="screenTitle">
+        <article class="hero-card future-hero">
+          <div class="future-hero-top">
+            <div><p class="card-label">Solde prévisionnel en fin de période</p><p id="forecastBalance" class="hero-amount medium">0,00 €</p></div>
+            <button id="editBufferBtn" class="circle-button subtle-circle" type="button" aria-label="Modifier la réserve"></button>
           </div>
-          <div class="future-reserve-line"><span>Réserve actuelle</span><b id="bufferCurrent">0,00 €</b></div>
-          <div class="buffer-track" aria-hidden="true"><i id="bufferProgress"></i></div>
-          <div class="future-metrics">
-            <div><small>Encaissements</small><b id="forecastIncome">0,00 €</b></div>
-            <div><small>Paiements</small><b id="forecastPayments">0,00 €</b></div>
-            <div><small>Impact net</small><b id="forecastNet">0,00 €</b></div>
+          <div id="forecastRisk" class="risk-message" hidden></div>
+          <div class="metric-grid three-columns">
+            <div class="metric"><span>Encaissements</span><strong id="forecastIncome" class="financial-positive">0,00 €</strong></div>
+            <div class="metric"><span>Paiements</span><strong id="forecastPayments">0,00 €</strong></div>
+            <div class="metric"><span>Impact net</span><strong id="forecastNet">0,00 €</strong></div>
           </div>
+        </article>
+
+        <section class="content-section timeline-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">CHRONOLOGIE</p><h2>Opérations à venir</h2></div>
+            <button id="addFutureBtn" class="small-circle-button" type="button" aria-label="Ajouter une échéance"></button>
+          </div>
+          <div id="futureTimeline" class="timeline"></div>
         </section>
 
-        <div class="section-title">
-          <div><p class="eyebrow">SORTIES PRÉVUES</p><h2>Paiements</h2></div>
-          <button id="addPaymentBtn" class="add-button" type="button" aria-label="Ajouter un paiement">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </div>
-        <section id="paymentList" class="future-list list-surface"></section>
-
-        <div class="section-title">
-          <div><p class="eyebrow">RENTRÉES ATTENDUES</p><h2>Encaissements</h2></div>
-          <button id="addReceiptBtn" class="add-button" type="button" aria-label="Ajouter un encaissement">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-        </div>
-        <section id="receiptList" class="future-list list-surface"></section>
-
-        <section id="completedSection" class="completed-section">
-          <button id="toggleCompletedBtn" class="completed-toggle" type="button">Afficher les opérations terminées</button>
-          <div id="completedList" class="future-list list-surface"></div>
-        </section>
+        <button id="toggleCompletedBtn" class="inline-disclosure" type="button" aria-label="Afficher les opérations terminées" hidden></button>
+        <div id="completedTimeline" class="timeline completed-timeline" hidden></div>
+        <section class="data-status" data-status-card aria-live="polite"></section>
       </section>
 
-      <section id="settingsView" class="view settings-view">
-        <section class="settings-group">
+      <section id="settingsView" class="view settings-view" aria-labelledby="screenTitle">
+        <section class="settings-section">
+          <h2>Budget</h2>
+          <div class="settings-list">
+            <button class="settings-row" type="button" data-action="period"><span class="settings-leading" data-icon="calendar"></span><span class="settings-copy"><strong>Période budgétaire</strong><small id="periodSettingPreview">Mensuelle</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="period-start"><span class="settings-leading" data-icon="date"></span><span class="settings-copy"><strong>Jour de début de période</strong><small id="periodStartPreview">1</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="categories"><span class="settings-leading" data-icon="category"></span><span class="settings-copy"><strong>Catégories</strong><small id="categoryCountPreview">0 catégorie</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="spaces"><span class="settings-leading" data-icon="people"></span><span class="settings-copy"><strong>Espaces Personnel et Commun</strong><small id="spacesPreview">Personnel · Commun</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="recurring-income"><span class="settings-leading" data-icon="income"></span><span class="settings-copy"><strong>Revenus récurrents</strong><small id="recurringIncomePreview">0 revenu</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="recurring-expense"><span class="settings-leading" data-icon="repeat"></span><span class="settings-copy"><strong>Dépenses récurrentes</strong><small id="recurringExpensePreview">0 dépense</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="forecasts"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Prévisions</strong><small id="forecastCountPreview">0 opération</small></span><span class="chevron-icon"></span></button>
+          </div>
+        </section>
+
+        <section class="settings-section">
           <h2>Données</h2>
-          <div class="settings-card">
-            <label class="settings-row file-row">
-              <span class="settings-copy"><strong>Importer une sauvegarde</strong><small>Compatible avec les versions précédentes</small></span>
-              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 17V4m0 0L7 9m5-5 5 5M5 19v1h14v-1"/></svg></span>
-              <input id="importInput" type="file" accept="application/json,.json">
-            </label>
-            <button class="settings-row" data-action="export">
-              <span class="settings-copy"><strong>Exporter une sauvegarde</strong><small>Créer un fichier JSON</small></span>
-              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v13m0 0 5-5m-5 5-5-5M5 20h14"/></svg></span>
-            </button>
-            <button class="settings-row" data-action="restore">
-              <span class="settings-copy"><strong>Restaurer une copie locale</strong><small>Revenir à une sauvegarde automatique</small></span>
-              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7v5h5M6 11a7 7 0 1 1 1 6"/></svg></span>
-            </button>
+          <div class="settings-list">
+            <div class="settings-row static-row"><span class="settings-leading success-leading" data-icon="check"></span><span class="settings-copy"><strong id="dataCurrentState">Données enregistrées</strong><small id="dataCurrentDetail">Stockage local actif</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="save"></span><span class="settings-copy"><strong>Dernier enregistrement</strong><small id="lastSavedPreview">—</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="edit"></span><span class="settings-copy"><strong>Dernière modification</strong><small id="lastModifiedPreview">—</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="transaction"></span><span class="settings-copy"><strong>Opérations</strong><small id="operationCountPreview">0</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="category"></span><span class="settings-copy"><strong>Catégories</strong><small id="dataCategoryCountPreview">0</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="copy"></span><span class="settings-copy"><strong>Copie locale disponible</strong><small id="localCopyPreview">Aucune copie locale disponible</small></span></div>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="database"></span><span class="settings-copy"><strong>Mode de stockage</strong><small id="storageModePreview">IndexedDB et copie locale</small></span></div>
           </div>
         </section>
 
-        <section class="settings-group">
-          <h2>Prévision</h2>
-          <div class="settings-card">
-            <button class="settings-row" data-action="buffer">
-              <span class="settings-copy"><strong>Objectif de l’épargne tampon</strong><small id="bufferTargetPreview">5 000,00 €</small></span>
-              <span class="row-chevron">›</span>
-            </button>
+        <section class="settings-section">
+          <h2>Sauvegarde</h2>
+          <div id="backupReminder" class="settings-notice" hidden></div>
+          <div class="settings-list">
+            <button class="settings-row" type="button" data-action="export"><span class="settings-leading" data-icon="export"></span><span class="settings-copy"><strong>Exporter une sauvegarde</strong><small>Créer un fichier JSON complet</small></span><span class="chevron-icon"></span></button>
+            <label class="settings-row file-row"><span class="settings-leading" data-icon="import"></span><span class="settings-copy"><strong>Importer une sauvegarde</strong><small>Vérification avant remplacement</small></span><span class="chevron-icon"></span><input id="importInput" type="file" accept="application/json,.json"></label>
+            <button id="restoreLocalBtn" class="settings-row" type="button" data-action="restore"><span class="settings-leading" data-icon="restore"></span><span class="settings-copy"><strong>Restaurer la copie locale précédente</strong><small id="restoreLocalPreview">Aucune copie locale disponible</small></span><span class="chevron-icon"></span></button>
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="document"></span><span class="settings-copy"><strong>Dernière sauvegarde</strong><small id="lastExportPreview">Aucune sauvegarde exportée</small></span></div>
           </div>
         </section>
 
-        <section class="settings-group">
+        <section class="settings-section">
           <h2>Affichage</h2>
-          <div class="settings-card">
-            <button class="settings-row" data-action="privacy">
-              <span class="settings-copy"><strong>Masquer les montants</strong><small id="privacyPreview">Désactivé</small></span>
-              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.2A9 9 0 0 1 12 6c6 0 9.5 6 9.5 6a14.8 14.8 0 0 1-2.3 3M7.2 7.3C4.2 9 2.5 12 2.5 12s3.5 6 9.5 6c1 0 1.9-.2 2.7-.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></span>
-            </button>
-            <button class="settings-row" data-action="rename-personal">
-              <span class="settings-copy"><strong>Nom de l’espace personnel</strong><small id="personalNamePreview">Personnel</small></span>
-              <span class="row-chevron">›</span>
-            </button>
-            <button class="settings-row" data-action="rename-shared">
-              <span class="settings-copy"><strong>Nom du compte commun</strong><small id="sharedNamePreview">Compte commun</small></span>
-              <span class="row-chevron">›</span>
-            </button>
+          <div class="settings-list">
+            <label class="settings-row switch-row"><span class="settings-leading" data-icon="eye"></span><span class="settings-copy"><strong>Masquer les montants</strong><small>Masque les valeurs dans les écrans financiers</small></span><input id="privacySwitch" class="ios-switch" type="checkbox"></label>
+            <label class="settings-row switch-row"><span class="settings-leading" data-icon="decimal"></span><span class="settings-copy"><strong>Afficher les centimes</strong><small>Conserve deux décimales dans les montants</small></span><input id="centsSwitch" class="ios-switch" type="checkbox"></label>
+            <label class="settings-row select-row"><span class="settings-leading" data-icon="currency"></span><span class="settings-copy"><strong>Devise</strong><small>Devise utilisée dans toute l’application</small></span><select id="currencySelect" aria-label="Devise"><option value="EUR">EUR</option><option value="CHF">CHF</option><option value="GBP">GBP</option><option value="USD">USD</option></select></label>
+            <label class="settings-row select-row"><span class="settings-leading" data-icon="numbers"></span><span class="settings-copy"><strong>Format des nombres</strong><small>Présentation des séparateurs</small></span><select id="numberLocaleSelect" aria-label="Format des nombres"><option value="fr-FR">1 234,56</option><option value="en-IE">1,234.56</option></select></label>
+            <label class="settings-row switch-row"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Inclure les opérations prévues</strong><small>Les ajoute au solde de fin de période</small></span><input id="forecastSwitch" class="ios-switch" type="checkbox"></label>
+            <label class="settings-row switch-row"><span class="settings-leading" data-icon="motion"></span><span class="settings-copy"><strong>Réduction des animations</strong><small>Limite les transitions de l’interface</small></span><input id="motionSwitch" class="ios-switch" type="checkbox"></label>
           </div>
         </section>
 
-        <section class="settings-group">
-          <h2>Stockage</h2>
-          <div class="settings-card">
-            <div class="settings-row static">
-              <span class="settings-copy"><strong>Dernière sauvegarde</strong><small id="lastSavedPreview">—</small></span>
-              <span class="row-icon success"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 12.5 3.5 3.5L18 7.5"/></svg></span>
-            </div>
-            <button class="settings-row danger" data-action="reset">
-              <span class="settings-copy"><strong>Réinitialiser l’application</strong><small>Efface toutes les données locales</small></span>
-              <span class="row-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7v5h5M5.5 11a7 7 0 1 1 1.3 6.2"/></svg></span>
-            </button>
-            <div class="version">Version 2.2.0</div>
+        <section class="settings-section">
+          <h2>Données de l’application</h2>
+          <div class="settings-list">
+            <div class="settings-row static-row"><span class="settings-leading" data-icon="storage"></span><span class="settings-copy"><strong>Stockage utilisé</strong><small id="storageEstimatePreview">Calcul en cours…</small></span></div>
+            <button class="settings-row destructive-row" type="button" data-action="reset"><span class="settings-leading danger-leading" data-icon="trash"></span><span class="settings-copy"><strong>Réinitialiser le budget</strong><small>Crée d’abord une copie locale de sécurité</small></span><span class="chevron-icon"></span></button>
+          </div>
+        </section>
+
+        <section class="settings-section about-section">
+          <h2>À propos</h2>
+          <div class="settings-list">
+            <div class="about-mark"><div class="app-mark" aria-hidden="true"><span></span><span></span><span></span></div><div><strong>Budget</strong><small id="versionPreview">Version 3.0.0</small></div></div>
+            <div class="about-details"><p><span>Mode de stockage</span><strong>Local sur cet appareil</strong></p><p><span>Fonctionnement hors ligne</span><strong>Disponible</strong></p><p><span>Installation</span><strong>Application web progressive</strong></p></div>
           </div>
         </section>
       </section>
     </main>
 
     <nav class="tabbar" aria-label="Navigation principale">
-      <button class="tab active" data-tab="overview"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7v9h-5v-6H9v6H4Z"/></svg><small>Accueil</small></button>
-      <button class="tab" data-tab="personal"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"/></svg><small>Personnel</small></button>
-      <button class="tab" data-tab="shared"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><circle cx="16.5" cy="9.5" r="2.5"/><path d="M3.5 20c.5-4 2.4-6 5.5-6s5 2 5.5 6M14 14.8c3.5-.4 5.6 1.3 6.1 5.2"/></svg><small>Commun</small></button>
-      <button class="tab" data-tab="future"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M13 14h3"/></svg><small>À venir</small></button>
-      <button class="tab" data-tab="settings"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-5l-.4 3.1a8 8 0 0 0-1.7 1L5 6.1 3 9.5 5 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.4 3.1h5l.4-3.1a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 0-1Z"/></svg><small>Réglages</small></button>
+      <button class="tab active" type="button" data-tab="summary"><span class="tab-icon" data-icon="summary"></span><small>Synthèse</small></button>
+      <button class="tab" type="button" data-tab="budget"><span class="tab-icon" data-icon="budget"></span><small>Budget</small></button>
+      <button class="tab" type="button" data-tab="future"><span class="tab-icon" data-icon="calendar"></span><small>À venir</small></button>
+      <button class="tab" type="button" data-tab="settings"><span class="tab-icon" data-icon="settings"></span><small>Réglages</small></button>
     </nav>
   </div>
 
-  <dialog id="editorDialog">
-    <form id="editorForm">
-      <div class="sheet-handle"></div>
-      <div class="dialog-head">
-        <div><p class="eyebrow" id="dialogEyebrow">MODIFICATION</p><h2 id="dialogTitle">Modifier</h2></div>
-        <button id="closeDialogBtn" class="icon-button dialog-close" type="button" aria-label="Fermer">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
-        </button>
-      </div>
-      <div id="editorFields" class="form-fields"></div>
+  <dialog id="editorDialog" class="sheet-dialog">
+    <form id="editorForm" method="dialog">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <header class="sheet-header">
+        <div><p id="dialogSubtitle" class="sheet-subtitle">Budget</p><h2 id="dialogTitle">Modifier</h2></div>
+        <button id="closeDialogBtn" class="circle-button close-circle" type="button" aria-label="Fermer"></button>
+      </header>
+      <div id="editorFields" class="form-content"></div>
       <div id="deleteArea"></div>
-      <div class="dialog-actions"><button id="cancelDialogBtn" class="secondary" type="button">Annuler</button><button class="primary" type="submit">Enregistrer</button></div>
+      <div class="sheet-actions"><button id="cancelDialogBtn" class="secondary-button" type="button">Annuler</button><button id="submitDialogBtn" class="primary-button" type="submit">Enregistrer</button></div>
     </form>
   </dialog>
 
-  <dialog id="importDialog">
-    <form>
-      <div class="sheet-handle"></div>
-      <div class="dialog-head">
-        <div><p class="eyebrow">IMPORTATION</p><h2>Vérifier la sauvegarde</h2></div>
-        <button id="closeImportBtn" class="icon-button dialog-close" type="button" aria-label="Fermer">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
-        </button>
-      </div>
-      <div id="importSummary" class="import-summary"></div>
-      <p class="warning">Une copie locale de l’état actuel sera créée avant l’import.</p>
-      <div class="dialog-actions"><button id="cancelImportBtn" class="secondary" type="button">Annuler</button><button id="confirmImportBtn" class="primary" type="button">Importer</button></div>
-    </form>
+  <dialog id="importDialog" class="sheet-dialog">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <header class="sheet-header">
+      <div><p class="sheet-subtitle">SAUVEGARDE</p><h2>Vérifier l’importation</h2></div>
+      <button id="closeImportBtn" class="circle-button close-circle" type="button" aria-label="Fermer"></button>
+    </header>
+    <div id="importSummary" class="import-summary"></div>
+    <div class="warning-panel"><strong>Les données actuelles seront remplacées.</strong><p>Une copie locale de sécurité sera créée automatiquement avant l’importation.</p></div>
+    <div class="sheet-actions"><button id="cancelImportBtn" class="secondary-button" type="button">Annuler</button><button id="confirmImportBtn" class="primary-button" type="button">Importer la sauvegarde</button></div>
   </dialog>
 
-  <template id="postTemplate">
-    <article class="post-card">
-      <button class="post-summary" type="button">
-        <span class="post-icon"></span>
-        <span class="post-copy"><strong></strong><small></small></span>
-        <b class="post-amount"></b>
-        <span class="chevron">›</span>
-      </button>
-      <div class="post-body">
-        <div class="post-actions"><button class="text-button edit-post" type="button">Modifier</button><button class="text-button add-expense" type="button">Ajouter une ligne</button></div>
-        <div class="expense-list"></div>
-      </div>
-    </article>
-  </template>
+  <dialog id="alertDialog" class="alert-dialog">
+    <div id="alertIcon" class="alert-icon"></div>
+    <h2 id="alertTitle">Confirmation</h2>
+    <p id="alertMessage"></p>
+    <div class="alert-actions"><button id="alertCancelBtn" type="button">Annuler</button><button id="alertConfirmBtn" type="button">Confirmer</button></div>
+  </dialog>
 
-  <script src="./storage.js" defer></script>
-  <script src="./app.js" defer></script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./storage.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

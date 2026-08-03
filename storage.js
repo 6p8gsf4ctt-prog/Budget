@@ -8,6 +8,7 @@ const BudgetStorage = (() => {
   const CURRENT_KEY = 'current';
   const MIRROR_KEY = 'mon-budget-data-v3';
   const LEGACY_KEYS = ['mon-budget-data-v2', 'mon-budget-data-v1'];
+  const LOCAL_SNAPSHOT_KEY = 'budget-local-snapshot-v1';
   const MAX_SNAPSHOTS = 20;
 
   let dbPromise;
@@ -20,7 +21,9 @@ const BudgetStorage = (() => {
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STATE_STORE)) db.createObjectStore(STATE_STORE);
-        if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) db.createObjectStore(SNAPSHOT_STORE, { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) {
+          db.createObjectStore(SNAPSHOT_STORE, { keyPath: 'id', autoIncrement: true });
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -54,34 +57,101 @@ const BudgetStorage = (() => {
     return null;
   }
 
+  function writeMirror(value) {
+    try {
+      localStorage.setItem(MIRROR_KEY, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.warn('Copie miroir locale impossible', error);
+      return false;
+    }
+  }
+
+  function writeLocalSnapshot(value, reason, createdAt = new Date().toISOString()) {
+    const snapshot = {
+      createdAt,
+      reason: reason || 'automatic',
+      state: value
+    };
+    try {
+      localStorage.setItem(LOCAL_SNAPSHOT_KEY, JSON.stringify(snapshot));
+      return snapshot;
+    } catch (error) {
+      console.warn('Copie locale précédente impossible', error);
+      return null;
+    }
+  }
+
+  function readLocalSnapshot() {
+    try {
+      const value = JSON.parse(localStorage.getItem(LOCAL_SNAPSHOT_KEY));
+      return value?.state ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function load() {
     try {
       const indexed = await getFromIndexedDB();
-      if (indexed?.spaces?.personal && indexed?.spaces?.shared) return { state: indexed, source: 'indexeddb' };
+      if (indexed?.spaces?.personal && indexed?.spaces?.shared) {
+        return { state: indexed, source: 'indexeddb' };
+      }
     } catch (error) {
       console.warn('IndexedDB indisponible', error);
     }
+
     const local = readLocalStorage();
     if (local) return { state: local.value, source: local.source };
     return { state: null, source: 'none' };
   }
 
-  async function save(value, { snapshot = true } = {}) {
-    const serialized = JSON.stringify(value);
-    try { localStorage.setItem(MIRROR_KEY, serialized); } catch (error) { console.warn('Copie locale impossible', error); }
+  async function save(value, { snapshot = false, snapshotReason = 'automatic' } = {}) {
+    const mirror = writeMirror(value);
+    const snapshotCreatedAt = snapshot ? new Date().toISOString() : null;
+    if (snapshot) writeLocalSnapshot(value, snapshotReason, snapshotCreatedAt);
 
     const db = await openDB();
-    if (!db) return { indexedDB: false, mirror: true };
+    if (!db) return { indexedDB: false, mirror };
+
     await new Promise((resolve, reject) => {
-      const tx = db.transaction([STATE_STORE, SNAPSHOT_STORE], 'readwrite');
+      const stores = snapshot ? [STATE_STORE, SNAPSHOT_STORE] : [STATE_STORE];
+      const tx = db.transaction(stores, 'readwrite');
       tx.objectStore(STATE_STORE).put(value, CURRENT_KEY);
-      if (snapshot) tx.objectStore(SNAPSHOT_STORE).add({ createdAt: new Date().toISOString(), state: value });
+      if (snapshot) {
+        tx.objectStore(SNAPSHOT_STORE).add({
+          createdAt: snapshotCreatedAt,
+          reason: snapshotReason,
+          state: value
+        });
+      }
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);
     });
+
     if (snapshot) await trimSnapshots();
-    return { indexedDB: true, mirror: true };
+    return { indexedDB: true, mirror };
+  }
+
+  async function createSnapshot(value, reason = 'manual') {
+    const createdAt = new Date().toISOString();
+    writeLocalSnapshot(value, reason, createdAt);
+    const db = await openDB();
+    if (!db) return { indexedDB: false };
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(SNAPSHOT_STORE, 'readwrite');
+      tx.objectStore(SNAPSHOT_STORE).add({
+        createdAt,
+        reason,
+        state: value
+      });
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    await trimSnapshots();
+    return { indexedDB: true };
   }
 
   async function trimSnapshots() {
@@ -95,23 +165,40 @@ const BudgetStorage = (() => {
   }
 
   async function listSnapshots() {
-    const db = await openDB();
-    if (!db) return [];
-    const tx = db.transaction(SNAPSHOT_STORE, 'readonly');
-    const all = await requestToPromise(tx.objectStore(SNAPSHOT_STORE).getAll());
-    return all.sort((a, b) => b.id - a.id);
+    let indexedSnapshots = [];
+    try {
+      const db = await openDB();
+      if (db) {
+        const tx = db.transaction(SNAPSHOT_STORE, 'readonly');
+        indexedSnapshots = await requestToPromise(tx.objectStore(SNAPSHOT_STORE).getAll());
+      }
+    } catch (error) {
+      console.warn('Lecture des instantanés impossible', error);
+    }
+
+    const local = readLocalSnapshot();
+    const all = [...indexedSnapshots];
+    if (local && !all.some(item => item.createdAt === local.createdAt)) all.push({ id: Number.MAX_SAFE_INTEGER, ...local });
+    return all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
 
-  async function clear() {
-    try { localStorage.removeItem(MIRROR_KEY); } catch {}
+  async function clear({ keepSnapshots = true } = {}) {
+    try {
+      localStorage.removeItem(MIRROR_KEY);
+      for (const key of LEGACY_KEYS) localStorage.removeItem(key);
+      if (!keepSnapshots) localStorage.removeItem(LOCAL_SNAPSHOT_KEY);
+    } catch {}
+
     const db = await openDB();
     if (!db) return;
     await new Promise((resolve, reject) => {
-      const tx = db.transaction([STATE_STORE, SNAPSHOT_STORE], 'readwrite');
+      const stores = keepSnapshots ? [STATE_STORE] : [STATE_STORE, SNAPSHOT_STORE];
+      const tx = db.transaction(stores, 'readwrite');
       tx.objectStore(STATE_STORE).clear();
-      tx.objectStore(SNAPSHOT_STORE).clear();
+      if (!keepSnapshots) tx.objectStore(SNAPSHOT_STORE).clear();
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
     });
   }
 
@@ -128,8 +215,34 @@ const BudgetStorage = (() => {
 
   async function estimate() {
     if (!navigator.storage?.estimate) return null;
-    try { return await navigator.storage.estimate(); } catch { return null; }
+    try {
+      return await navigator.storage.estimate();
+    } catch {
+      return null;
+    }
   }
 
-  return { load, save, listSnapshots, clear, requestPersistence, estimate, MIRROR_KEY };
+  async function storageMode() {
+    let indexedDBAvailable = false;
+    try {
+      indexedDBAvailable = Boolean(await openDB());
+    } catch {}
+    return {
+      indexedDB: indexedDBAvailable,
+      localStorage: typeof localStorage !== 'undefined'
+    };
+  }
+
+  return {
+    load,
+    save,
+    createSnapshot,
+    listSnapshots,
+    clear,
+    requestPersistence,
+    estimate,
+    storageMode,
+    MIRROR_KEY,
+    LOCAL_SNAPSHOT_KEY
+  };
 })();

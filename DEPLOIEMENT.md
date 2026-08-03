@@ -1,8 +1,12 @@
-# Déploiement GitHub Pages
+# Déploiement de Budget 3.0.0
 
-1. Décompresser l’archive.
-2. Remplacer les fichiers de l’ancien dépôt par le contenu du dossier.
-3. Valider les changements puis attendre la publication GitHub Pages.
-4. Sur iPhone, fermer complètement l’application et la rouvrir. Si l’ancienne interface reste visible, retirer le raccourci de l’écran d’accueil puis l’ajouter à nouveau depuis Safari.
+1. Exporter une sauvegarde JSON de précaution depuis la version actuellement installée.
+2. Remplacer les fichiers du dépôt par le contenu de cette archive.
+3. Publier les fichiers à la racine du site HTTPS utilisé par la PWA.
+4. Vérifier que `service-worker.js`, `manifest.webmanifest`, `app.js`, `storage.js` et `style.css` sont servis sans redirection.
+5. Ouvrir une première fois l’application avec une connexion afin que le cache `budget-v3.0.0` soit installé.
+6. Fermer puis rouvrir l’application installée sur l’iPhone.
 
-Avant la mise à jour, une sauvegarde JSON peut être exportée depuis Réglages. Toutes les sauvegardes des versions précédentes restent importables.
+La base IndexedDB et la clé `mon-budget-data-v3` sont inchangées. Les données existantes sont chargées puis normalisées en mémoire avant d’être réenregistrées dans le nouveau format.
+
+En cas d’ancienne interface persistante, fermer complètement la PWA. Une suppression puis une réinstallation du raccourci peut être nécessaire uniquement pour renouveler l’icône d’écran d’accueil ; elle ne doit être réalisée qu’après export d’une sauvegarde JSON.
