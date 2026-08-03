@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE = 'budget-v4.0.0';
+const CACHE = 'budget-v4.1.0';
 const ASSETS = [
   './',
   './index.html',

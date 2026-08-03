@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '4.0.0';
+const VERSION = '4.1.0';
 const SCHEMA_VERSION = 1;
 const APP_NAME = 'Budget';
 const LEGACY_APP_IDS = new Set(['Budget', 'mon-organisation-financiere', 'mon-finances', 'organisation-financiere']);

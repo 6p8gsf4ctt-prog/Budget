@@ -1,5 +1,14 @@
 # Historique des versions
 
+## 4.1.0 — Adaptation des mouvements sur iPhone
+
+- Correction de la largeur des lignes de mouvements de l’épargne de précaution.
+- Retour à la ligne automatique des intitulés longs au lieu d’élargir la page.
+- Conservation de l’icône, du montant et du bouton d’état dans la largeur disponible.
+- Mise en page renforcée pour les écrans étroits : le montant passe sous le libellé lorsque nécessaire.
+- Aucun changement du stockage, des calculs, des données ou de la navigation.
+- Mise à jour du cache PWA vers `budget-v4.1.0`.
+
 ## 4.0.0 — Épargne de précaution
 
 - Suppression de l’écran et de l’onglet Synthèse.
