@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.0';
+const VERSION = '4.0.0';
 const SCHEMA_VERSION = 1;
 const APP_NAME = 'Budget';
 const LEGACY_APP_IDS = new Set(['Budget', 'mon-organisation-financiere', 'mon-finances', 'organisation-financiere']);
@@ -22,7 +22,7 @@ const ICONS = {
   income: '<path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M5 20h14"/>',
   expense: '<path d="M12 21V8m0 0L7.5 12.5M12 8l4.5 4.5M5 4h14"/>',
   transfer: '<path d="M5 8h13m0 0-3-3m3 3-3 3M19 16H6m0 0 3 3m-3-3 3-3"/>',
-  savings: '<path d="M4 9.5h16v9H4zM7 9.5V7.8C7 5.7 8.8 4 11 4h2c2.2 0 4 1.7 4 3.8v1.7M8 14h.01M16 14h.01"/>',
+  savings: '<path class="fillable" d="M4 9.5h16v9H4zM7 9.5V7.8C7 5.7 8.8 4 11 4h2c2.2 0 4 1.7 4 3.8v1.7M8 14h.01M16 14h.01"/>',
   more: '<circle cx="6" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"/>',
   check: '<circle cx="12" cy="12" r="8.5"/><path d="m8.2 12.2 2.5 2.5 5.3-5.5"/>',
   circle: '<circle cx="12" cy="12" r="8.5"/>',
@@ -114,7 +114,7 @@ function seed() {
   return {
     version: VERSION,
     schemaVersion: SCHEMA_VERSION,
-    activeTab: 'summary',
+    activeTab: 'future',
     activeSpace: 'personal',
     settings: {
       privacy: false,
@@ -136,7 +136,7 @@ function seed() {
       migratedAt: null
     },
     forecast: {
-      buffer: { target: 0, current: 0, configured: false },
+      buffer: { target: 5000, current: 5000, configured: true },
       items: []
     },
     spaces: {
@@ -165,7 +165,6 @@ const els = {
   subtitle: $('#screenSubtitle'),
   privacy: $('#privacyBtn'),
   quickAdd: $('#quickAddBtn'),
-  summaryView: $('#summaryView'),
   budgetView: $('#budgetView'),
   futureView: $('#futureView'),
   settingsView: $('#settingsView'),
@@ -231,12 +230,12 @@ function normalize(raw) {
   data.meta.lastExportFilename ||= null;
 
   const legacyTab = data.activeTab;
-  if (legacyTab === 'overview') data.activeTab = 'summary';
+  if (legacyTab === 'overview' || legacyTab === 'summary') data.activeTab = 'future';
   else if (legacyTab === 'personal' || legacyTab === 'shared') {
     data.activeTab = 'budget';
     data.activeSpace = legacyTab;
   }
-  if (!['summary', 'budget', 'future', 'settings'].includes(data.activeTab)) data.activeTab = 'summary';
+  if (!['budget', 'future', 'settings'].includes(data.activeTab)) data.activeTab = 'future';
   if (!['personal', 'shared'].includes(data.activeSpace)) data.activeSpace = 'personal';
 
   for (const key of ['personal', 'shared']) {
@@ -288,11 +287,16 @@ function normalize(raw) {
 
   data.forecast = data.forecast || {};
   const rawBuffer = data.forecast.buffer || {};
-  data.forecast.buffer = {
-    target: Number(rawBuffer.target || 0),
-    current: Number(rawBuffer.current || 0),
-    configured: rawBuffer.configured ?? rawBuffer.current != null
-  };
+  const hasConfiguredReserve = rawBuffer.configured === true || (
+    rawBuffer.configured == null && (Number(rawBuffer.target || 0) !== 0 || Number(rawBuffer.current || 0) !== 0)
+  );
+  data.forecast.buffer = hasConfiguredReserve
+    ? {
+        target: Number(rawBuffer.target || 5000),
+        current: Number(rawBuffer.current ?? rawBuffer.target ?? 5000),
+        configured: true
+      }
+    : { target: 5000, current: 5000, configured: true };
   data.forecast.items = Array.isArray(data.forecast.items) ? data.forecast.items : [];
   data.forecast.items = data.forecast.items.map(item => ({
     id: item.id || uid(),
@@ -518,8 +522,8 @@ async function load() {
 }
 
 function renderSkeletons() {
-  $('#summaryCategories').innerHTML = '<div class="ios-row"><span class="row-symbol skeleton"></span><span class="row-copy"><strong class="skeleton" style="height:16px;width:52%"></strong><small class="skeleton" style="height:12px;width:72%;margin-top:7px"></small></span></div>';
-  $('#summaryUpcoming').innerHTML = '<div class="ios-row"><span class="row-symbol skeleton"></span><span class="row-copy"><strong class="skeleton" style="height:16px;width:60%"></strong><small class="skeleton" style="height:12px;width:45%;margin-top:7px"></small></span></div>';
+  const timeline = $('#futureTimeline');
+  if (timeline) timeline.innerHTML = '<div class="timeline-list"><div class="timeline-row"><span class="timeline-symbol skeleton"></span><span class="row-copy"><strong class="skeleton" style="height:16px;width:58%"></strong><small class="skeleton" style="height:12px;width:42%;margin-top:7px"></small></span></div></div>';
 }
 
 function commit({ modified = true, snapshot = false, reason = 'automatic' } = {}) {
@@ -580,142 +584,50 @@ function applyStaticIcons() {
   $('#addCategoryBtn').innerHTML = icon('plus');
   $('#addFutureBtn').innerHTML = icon('plus');
   $('#editBufferBtn').innerHTML = icon('edit');
+  $('#reserveAdjustmentIcon').innerHTML = icon('savings');
   $('#closeDialogBtn').innerHTML = icon('close');
   $('#closeImportBtn').innerHTML = icon('close');
 }
 
 function render() {
   const period = periodInfo();
+  const target = Number(state.forecast.buffer.target || 5000);
   const titles = {
-    summary: ['Synthèse', period.label],
+    future: ['Épargne de précaution', `Objectif permanent · ${formatMoney(target)}`],
     budget: ['Budget', period.label],
-    future: ['À venir', period.label],
     settings: ['Réglages', 'Budget · Données · Affichage']
   };
-  const [title, subtitle] = titles[state.activeTab];
+  const [title, subtitle] = titles[state.activeTab] || titles.future;
   els.title.textContent = title;
   els.subtitle.textContent = subtitle;
 
   const views = {
-    summary: els.summaryView,
-    budget: els.budgetView,
     future: els.futureView,
+    budget: els.budgetView,
     settings: els.settingsView
   };
   Object.entries(views).forEach(([name, view]) => view.classList.toggle('active', name === state.activeTab));
 
+  const tabIcons = { future: 'savings', budget: 'budget', settings: 'settings' };
   $$('.tab').forEach(tab => {
     const active = tab.dataset.tab === state.activeTab;
     tab.classList.toggle('active', active);
     tab.setAttribute('aria-current', active ? 'page' : 'false');
-    const iconName = tab.dataset.tab === 'summary' ? 'summary' : tab.dataset.tab;
-    tab.querySelector('.tab-icon').innerHTML = icon(iconName, active);
+    tab.querySelector('.tab-icon').innerHTML = icon(tabIcons[tab.dataset.tab] || 'category', active);
   });
 
   const financialScreen = state.activeTab !== 'settings';
   els.privacy.hidden = !financialScreen;
   els.quickAdd.hidden = !financialScreen;
+  els.quickAdd.setAttribute('aria-label', state.activeTab === 'future' ? 'Ajouter une prévision à l’épargne de précaution' : 'Ajouter une opération au budget');
   els.privacy.innerHTML = icon(state.settings.privacy ? 'eyeOff' : 'eye');
   els.privacy.setAttribute('aria-label', state.settings.privacy ? 'Afficher les montants' : 'Masquer les montants');
 
   applyMotionPreference();
-  renderSummary(period);
-  renderBudget();
   renderFuture();
+  renderBudget();
   renderSettings();
   renderDataStatus();
-}
-
-function renderSummary(period) {
-  const total = aggregateTotals();
-  const consumption = total.income > 0 ? total.outgoing / total.income : 0;
-  const progress = Math.min(100, Math.max(0, consumption * 100));
-
-  setMoney($('#summaryAvailable'), total.available);
-  setMoney($('#summaryIncome'), total.income);
-  setMoney($('#summarySpent'), total.outgoing);
-  $('#summaryBudgetCaption').textContent = `Sur un budget de ${formatMoney(total.income)}`;
-  $('#summaryBudgetProgress').style.width = `${progress}%`;
-  $('#summaryBudgetProgress').style.background = consumption > 1 ? 'var(--red)' : consumption >= .85 ? 'var(--orange-warning)' : 'var(--accent)';
-  $('#summaryProgressText').textContent = total.income
-    ? consumption > 1
-      ? `Budget dépassé de ${formatMoney(total.outgoing - total.income)}`
-      : `${Math.round(consumption * 100)} % du budget utilisé`
-    : total.outgoing > 0 ? 'Ajoutez des revenus pour calculer la consommation' : 'Aucune dépense enregistrée';
-  $('#summaryProgressText').classList.toggle('financial-negative', consumption > 1);
-
-  $('#periodPercent').textContent = `${Math.round(period.percent)} %`;
-  $('#periodProgress').style.width = `${period.percent}%`;
-  $('#periodStartLabel').textContent = formatDate(period.start, { day: 'numeric', month: 'short' });
-  $('#periodEndLabel').textContent = formatDate(period.end, { day: 'numeric', month: 'short' });
-
-  renderSummaryCategories();
-  renderSummaryUpcoming();
-
-  const forecast = futureTotals();
-  const ending = total.available + forecast.net;
-  setMoney($('#summaryForecast'), ending);
-  $('#summaryForecast').classList.toggle('financial-negative', ending < 0);
-  $('#summaryForecastDetail').textContent = state.settings.includePlannedForecast
-    ? 'Opérations prévues et confirmées incluses'
-    : 'Opérations confirmées uniquement';
-  $('#summaryForecastIcon').innerHTML = icon('forecast');
-}
-
-function allCategories() {
-  return ['personal', 'shared'].flatMap(spaceKey => state.spaces[spaceKey].envelopes.map(item => ({ item, spaceKey })));
-}
-
-function renderSummaryCategories() {
-  const box = $('#summaryCategories');
-  const items = allCategories().sort((a, b) => categorySpent(b.item) - categorySpent(a.item)).slice(0, 4);
-  box.replaceChildren();
-  if (!items.length) {
-    box.innerHTML = emptyState('category', 'Aucune catégorie personnalisée', 'Créez une catégorie pour organiser votre budget.', [{ label: 'Créer une catégorie', action: 'add-category' }]);
-    return;
-  }
-  items.forEach(({ item, spaceKey }) => {
-    const used = categorySpent(item);
-    const planned = Number(item.planned || 0);
-    const percent = planned > 0 ? Math.round((used / planned) * 100) : null;
-    const row = document.createElement('button');
-    row.className = 'ios-row-button';
-    row.type = 'button';
-    row.innerHTML = `
-      <span class="row-symbol">${icon(item.iconName || inferCategoryIcon(item))}</span>
-      <span class="row-copy"><strong>${esc(item.name)}</strong><small>${esc(state.spaces[spaceKey].name)} · ${percent === null ? 'Budget à définir' : `${percent} % utilisé`}</small></span>
-      <span class="row-value">${formatMoney(used)}</span>
-      <span class="row-chevron">${icon('chevron')}</span>`;
-    row.onclick = () => {
-      state.activeSpace = spaceKey;
-      state.activeTab = 'budget';
-      openCategoryId = item.id;
-      commit({ modified: false });
-      render();
-    };
-    box.append(row);
-  });
-}
-
-function renderSummaryUpcoming() {
-  const box = $('#summaryUpcoming');
-  const items = futureActiveItems().sort(compareFutureDates).slice(0, 4);
-  box.replaceChildren();
-  if (!items.length) {
-    box.innerHTML = emptyState('calendar', 'Aucune opération à venir', 'Les dépenses et revenus programmés apparaîtront ici.', [{ label: 'Ajouter une échéance', action: 'add-future' }]);
-    return;
-  }
-  items.forEach(item => {
-    const row = document.createElement('button');
-    row.className = 'ios-row-button';
-    row.type = 'button';
-    row.innerHTML = `
-      <span class="row-symbol" style="${item.kind === 'receipt' ? 'color:var(--green);background:rgba(48,209,88,.12)' : ''}">${icon(item.kind === 'receipt' ? 'income' : 'expense')}</span>
-      <span class="row-copy"><strong>${esc(item.label)}</strong><small>${futureDateLabel(item)} · ${esc(state.spaces[item.space]?.name || 'Personnel')}</small></span>
-      <span class="row-value ${item.kind === 'receipt' ? 'financial-positive' : ''}">${formatMoney(item.kind === 'receipt' ? item.amount : -item.amount, { signed: item.kind === 'receipt' })}</span>`;
-    row.onclick = () => openFuture(item.id);
-    box.append(row);
-  });
 }
 
 function renderBudget() {
@@ -828,20 +740,90 @@ function categoryCard(item) {
 
 function renderFuture() {
   const total = futureTotals();
-  const base = state.forecast.buffer.configured ? Number(state.forecast.buffer.current || 0) : aggregateTotals().available;
-  const projected = base + total.net;
+  const reserve = state.forecast.buffer;
+  const current = Number(reserve.current || 0);
+  const target = Number(reserve.target || 5000);
+  const projected = current + total.net;
+  const gap = target - projected;
+  const ratio = target > 0 ? projected / target : 1;
+  const percent = Math.round(Math.max(0, ratio) * 100);
+
   setMoney($('#forecastBalance'), projected);
+  setMoney($('#reserveCurrent'), current);
   setMoney($('#forecastIncome'), total.receipts);
   setMoney($('#forecastPayments'), total.payments);
-  setMoney($('#forecastNet'), total.net, { signed: true });
-  $('#forecastNet').classList.toggle('financial-positive', total.net > 0);
-  $('#forecastNet').classList.toggle('financial-negative', total.net < 0);
+  $('#forecastBalance').classList.toggle('financial-negative', projected < 0);
+  $('#forecastBalance').classList.toggle('financial-positive', projected >= target);
+  $('#forecastProjectionCaption').textContent = state.settings.includePlannedForecast
+    ? 'Après toutes les opérations prévues et confirmées'
+    : 'Après les opérations confirmées uniquement';
 
-  const risk = $('#forecastRisk');
-  risk.hidden = projected >= 0;
-  risk.textContent = projected < 0 ? `Risque de déficit de ${formatMoney(Math.abs(projected))} en fin de période. Vérifiez les paiements à venir.` : '';
+  const progress = $('#reserveProgress');
+  progress.style.width = `${Math.min(100, Math.max(0, ratio * 100))}%`;
+  progress.style.background = projected < 0 ? 'var(--red)' : projected >= target ? 'var(--green)' : 'var(--accent)';
+  $('#reserveProgressCurrent').textContent = `${percent} % de l’objectif`;
+  $('#reserveTargetLabel').textContent = `Objectif ${formatMoney(target)}`;
 
+  const status = $('#forecastRisk');
+  const adjustmentCard = $('#reserveAdjustmentCard');
+  const adjustmentIcon = $('#reserveAdjustmentIcon');
+  const adjustmentLabel = $('#reserveAdjustmentLabel');
+  const adjustmentAmount = $('#reserveAdjustmentAmount');
+  const adjustmentDetail = $('#reserveAdjustmentDetail');
+  status.className = 'reserve-status';
+  adjustmentCard.className = 'reserve-adjustment';
+
+  if (projected < 0) {
+    status.classList.add('danger');
+    status.innerHTML = `<strong>Réserve déficitaire</strong><span>Les opérations prévues placeraient la réserve à ${formatMoney(projected)}.</span>`;
+    adjustmentCard.classList.add('danger');
+    adjustmentIcon.innerHTML = icon('warning');
+    adjustmentLabel.textContent = 'Montant nécessaire pour retrouver l’objectif';
+    setMoney(adjustmentAmount, Math.max(0, gap));
+    adjustmentDetail.textContent = 'Un ajustement du budget personnel est nécessaire.';
+  } else if (projected < target) {
+    status.classList.add('advisory');
+    status.innerHTML = `<strong>Objectif non atteint</strong><span>La réserve resterait positive, mais sous l’objectif de ${formatMoney(target)}.</span>`;
+    adjustmentCard.classList.add('advisory');
+    adjustmentIcon.innerHTML = icon('transfer');
+    adjustmentLabel.textContent = 'À renflouer pour retrouver l’objectif';
+    setMoney(adjustmentAmount, Math.max(0, gap));
+    adjustmentDetail.textContent = 'Vous pouvez adapter le budget personnel pour combler cet écart.';
+  } else {
+    const surplus = projected - target;
+    status.classList.add('success');
+    status.innerHTML = `<strong>Objectif maintenu</strong><span>La projection conserve au moins ${formatMoney(target)} dans la réserve.</span>`;
+    adjustmentCard.classList.add('success');
+    adjustmentIcon.innerHTML = icon('check');
+    adjustmentLabel.textContent = surplus > 0 ? 'Marge prévue au-dessus de l’objectif' : 'Écart par rapport à l’objectif';
+    setMoney(adjustmentAmount, surplus);
+    adjustmentDetail.textContent = surplus > 0 ? 'La réserve reste au-dessus de son niveau cible.' : 'La réserve reste exactement à son niveau cible.';
+  }
+
+  renderBudgetGlance();
   renderTimeline();
+}
+
+function renderBudgetGlance() {
+  const box = $('#budgetGlance');
+  box.replaceChildren();
+  for (const key of ['personal', 'shared']) {
+    const space = state.spaces[key];
+    const total = totals(space);
+    const row = document.createElement('button');
+    row.className = 'ios-row-button budget-glance-row';
+    row.type = 'button';
+    row.innerHTML = `
+      <span class="row-symbol">${icon(key === 'personal' ? 'person' : 'people')}</span>
+      <span class="row-copy"><strong>${esc(space.name)}</strong><small>${total.available < 0 ? `Déficit de ${formatMoney(Math.abs(total.available))}` : 'Disponible dans le budget courant'}</small></span>
+      <span class="row-value ${total.available < 0 ? 'financial-negative' : ''}">${formatMoney(total.available)}</span>
+      <span class="row-chevron">${icon('chevron')}</span>`;
+    row.onclick = () => {
+      state.activeSpace = key;
+      navigate('budget');
+    };
+    box.append(row);
+  }
 }
 
 function compareFutureDates(a, b) {
@@ -849,23 +831,23 @@ function compareFutureDates(a, b) {
 }
 
 function futureDateLabel(item) {
-  if (!item.date) return 'Fin de période';
+  if (!item.date) return 'Date à définir';
   const date = parseLocalDate(item.date);
   const today = new Date();
   if (sameDay(date, today)) return 'Aujourd’hui';
   return formatDate(date, { day: 'numeric', month: 'short' });
 }
 
-function timelineGroup(item, period) {
-  if (!item.date) return 'Fin de période';
+function timelineGroup(item) {
+  if (!item.date) return 'À planifier';
   const date = parseLocalDate(item.date);
   const today = new Date();
   today.setHours(12, 0, 0, 0);
   const diff = Math.round((date - today) / 86400000);
-  if (diff <= 0) return 'Aujourd’hui';
+  if (diff < 0) return 'En retard';
+  if (diff === 0) return 'Aujourd’hui';
   if (diff <= 7) return 'Cette semaine';
-  if (date <= period.end) return 'Plus tard';
-  return 'Fin de période';
+  return 'Plus tard';
 }
 
 function renderTimeline() {
@@ -875,12 +857,11 @@ function renderTimeline() {
   box.replaceChildren();
 
   if (!active.length) {
-    box.innerHTML = `<div class="ios-list">${emptyState('calendar', 'Aucune opération à venir', 'Les dépenses et revenus programmés apparaîtront ici.', [{ label: 'Ajouter une échéance', action: 'add-future' }])}</div>`;
+    box.innerHTML = `<div class="ios-list">${emptyState('savings', 'Aucun mouvement prévu', 'Ajoutez les dépenses et rentrées futures pour anticiper le niveau de votre réserve.', [{ label: 'Ajouter une dépense', action: 'add-future-payment' }, { label: 'Ajouter une rentrée', action: 'add-future-receipt' }])}</div>`;
   } else {
-    const period = periodInfo();
-    const groups = ['Aujourd’hui', 'Cette semaine', 'Plus tard', 'Fin de période'];
+    const groups = ['En retard', 'Aujourd’hui', 'Cette semaine', 'Plus tard', 'À planifier'];
     groups.forEach(groupName => {
-      const items = active.filter(item => timelineGroup(item, period) === groupName);
+      const items = active.filter(item => timelineGroup(item) === groupName);
       if (!items.length) return;
       const group = document.createElement('section');
       group.className = 'timeline-group';
@@ -934,7 +915,7 @@ async function renderSettings() {
   $('#spacesPreview').textContent = `${state.spaces.personal.name} · ${state.spaces.shared.name}`;
   $('#recurringIncomePreview').textContent = plural(recurring.incomes, 'revenu');
   $('#recurringExpensePreview').textContent = plural(recurring.expenses, 'dépense');
-  $('#forecastCountPreview').textContent = plural(state.forecast.items.length, 'opération');
+  $('#forecastCountPreview').textContent = `Objectif ${formatMoney(state.forecast.buffer.target)} · ${plural(state.forecast.items.length, 'opération')}`;
   $('#lastSavedPreview').textContent = formatDateTime(state.meta.lastSavedAt);
   $('#lastModifiedPreview').textContent = formatDateTime(state.meta.lastModifiedAt);
   $('#operationCountPreview').textContent = String(countOperations);
@@ -1174,29 +1155,29 @@ function openFuture(id = null, presetKind = 'payment') {
   const item = id ? state.forecast.items.find(value => value.id === id) : null;
   const kind = item?.kind || presetKind;
   const fields = `
-    <div class="field-label" style="margin:0 2px 8px">Type d’échéance</div>
-    ${segmentField('kind', [{ value: 'payment', label: 'Paiement' }, { value: 'receipt', label: 'Encaissement' }], kind)}
+    <div class="field-label" style="margin:0 2px 8px">Type de mouvement</div>
+    ${segmentField('kind', [{ value: 'payment', label: 'Dépense' }, { value: 'receipt', label: 'Rentrée' }], kind)}
     <div class="form-group" style="margin-top:18px">${field('amount', 'Montant', item?.amount ?? '', 'number', 'required')}${field('label', 'Libellé', item?.label || '', 'text', 'required')}${field('date', 'Date prévue', item?.date || '', 'date')}${selectField('space', 'Espace', [
       { value: 'personal', label: state.spaces.personal.name }, { value: 'shared', label: state.spaces.shared.name }
     ], item?.space || state.activeSpace)}${selectField('status', 'État', [
       { value: 'planned', label: 'Prévu' }, { value: 'confirmed', label: 'Confirmé' }, { value: 'done', label: 'Terminé' }
     ], item?.status || 'planned')}</div>${recurringDetails(item || {})}`;
   showEditor({
-    title: item ? 'Modifier l’échéance' : 'Nouvelle échéance',
-    subtitle: 'À VENIR',
+    title: item ? 'Modifier la prévision' : 'Nouvelle prévision',
+    subtitle: 'ÉPARGNE DE PRÉCAUTION',
     fields,
     context: { type: 'future', id },
-    submitLabel: item ? 'Enregistrer' : kind === 'receipt' ? 'Ajouter l’encaissement' : 'Ajouter le paiement',
-    deleteLabel: item ? 'Supprimer cette échéance' : null
+    submitLabel: item ? 'Enregistrer' : kind === 'receipt' ? 'Ajouter la rentrée' : 'Ajouter la dépense',
+    deleteLabel: item ? 'Supprimer cette prévision' : null
   });
   els.editorForm.querySelectorAll('input[name="kind"]').forEach(input => input.addEventListener('change', () => {
-    els.submitDialog.textContent = input.checked && input.value === 'receipt' ? 'Ajouter l’encaissement' : 'Ajouter le paiement';
+    els.submitDialog.textContent = input.checked && input.value === 'receipt' ? 'Ajouter la rentrée' : 'Ajouter la dépense';
   }));
 }
 
 function openBuffer() {
-  const fields = `<p class="form-help">Le solde de départ sert de base à la projection. L’objectif permet de comparer la réserve souhaitée.</p><div class="form-group">${field('current', 'Solde de départ prévisionnel', state.forecast.buffer.current, 'number', 'required')}${field('target', 'Objectif de réserve', state.forecast.buffer.target, 'number', 'required')}</div>`;
-  showEditor({ title: 'Prévision de solde', subtitle: 'RÉSERVE', fields, context: { type: 'buffer' }, submitLabel: 'Enregistrer' });
+  const fields = `<p class="form-help">Le solde actuel est la somme réellement disponible dans votre épargne de précaution. L’objectif permanent est le niveau que vous souhaitez maintenir.</p><div class="form-group">${field('current', 'Solde actuel de la réserve', state.forecast.buffer.current, 'number', 'required')}${field('target', 'Objectif permanent', state.forecast.buffer.target, 'number', 'required')}</div>`;
+  showEditor({ title: 'Épargne de précaution', subtitle: 'RÉSERVE', fields, context: { type: 'buffer' }, submitLabel: 'Enregistrer' });
 }
 
 function openPeriodSettings() {
@@ -1314,15 +1295,15 @@ async function submitEditor(event) {
     if (item) Object.assign(item, value);
     else state.forecast.items.push(forecastItem(value.kind, value.label, value.amount, value));
     pushHistory(item ? 'forecast-edit' : 'forecast-add', value.label);
-    showToast(item ? 'Échéance enregistrée' : 'Échéance ajoutée');
+    showToast(item ? 'Prévision enregistrée' : 'Prévision ajoutée');
   }
 
   if (editor.type === 'buffer') {
     state.forecast.buffer.current = Number(data.current || 0);
     state.forecast.buffer.target = Number(data.target || 0);
     state.forecast.buffer.configured = true;
-    pushHistory('forecast-buffer', 'Prévision de solde');
-    showToast('Prévision enregistrée');
+    pushHistory('forecast-buffer', 'Épargne de précaution');
+    showToast('Épargne de précaution mise à jour');
   }
 
   if (editor.type === 'period') {
@@ -1519,7 +1500,7 @@ async function confirmImport() {
     state = pendingImport.state;
     state.meta.lastModifiedAt = new Date().toISOString();
     state.meta.revision = Number(state.meta.revision || 0) + 1;
-    state.activeTab = 'summary';
+    state.activeTab = 'future';
     pendingImport = null;
     els.importDialog.close();
     await persistState({ snapshot: false, reason: 'import' });
@@ -1549,7 +1530,7 @@ async function restoreLocalCopy() {
     await BudgetStorage.createSnapshot(clone(state), 'before-restore');
     state = normalize(snapshot.state) || state;
     state.meta.lastModifiedAt = new Date().toISOString();
-    state.activeTab = 'summary';
+    state.activeTab = 'future';
     await persistState({ snapshot: false, reason: 'restore' });
     await refreshStorageDetails();
     render();
@@ -1570,7 +1551,7 @@ async function resetBudget() {
   if (!first) return;
   const second = await showConfirm({
     title: 'Confirmer la suppression',
-    message: 'Cette action efface les revenus, dépenses, catégories, prévisions et préférences actuelles.',
+    message: 'Cette action efface les revenus, dépenses, catégories, prévisions de l’épargne de précaution et préférences actuelles.',
     confirmLabel: 'Tout supprimer',
     danger: true
   });
@@ -1591,7 +1572,7 @@ async function resetBudget() {
 }
 
 function navigate(tab) {
-  if (!['summary', 'budget', 'future', 'settings'].includes(tab)) return;
+  if (!['budget', 'future', 'settings'].includes(tab)) return;
   state.activeTab = tab;
   openCategoryId = null;
   commit({ modified: false });
@@ -1637,6 +1618,8 @@ function handleEmptyAction(action) {
   }
   if (action === 'add-income') openIncome();
   if (action === 'add-future') openFuture();
+  if (action === 'add-future-payment') openFuture(null, 'payment');
+  if (action === 'add-future-receipt') openFuture(null, 'receipt');
 }
 
 function bindEvents() {

@@ -19,8 +19,8 @@
   <div class="app-shell">
     <header class="app-header" id="appHeader">
       <div class="header-copy">
-        <h1 id="screenTitle">Synthèse</h1>
-        <p id="screenSubtitle">Période en cours</p>
+        <h1 id="screenTitle">Épargne de précaution</h1>
+        <p id="screenSubtitle">Objectif permanent · 5 000 €</p>
       </div>
       <div class="header-actions">
         <button id="privacyBtn" class="circle-button" type="button" aria-label="Masquer les montants"></button>
@@ -29,54 +29,58 @@
     </header>
 
     <main id="mainContent">
-      <section id="summaryView" class="view active" aria-labelledby="screenTitle">
-        <article class="hero-card summary-hero">
+      <section id="futureView" class="view active" aria-labelledby="screenTitle">
+        <article class="hero-card reserve-hero">
           <div class="hero-glow" aria-hidden="true"></div>
-          <p class="card-label">Disponible</p>
-          <p id="summaryAvailable" class="hero-amount">0,00 €</p>
-          <p id="summaryBudgetCaption" class="hero-caption">Sur un budget de 0,00 €</p>
-          <div class="progress-track" aria-hidden="true"><i id="summaryBudgetProgress"></i></div>
-          <p id="summaryProgressText" class="progress-description">Aucune dépense enregistrée</p>
-          <div class="metric-grid two-columns">
-            <div class="metric"><span>Revenus reçus</span><strong id="summaryIncome" class="financial-positive">0,00 €</strong></div>
-            <div class="metric"><span>Déjà dépensé</span><strong id="summarySpent">0,00 €</strong></div>
+          <div class="future-hero-top">
+            <div>
+              <p class="card-label">Solde prévisionnel</p>
+              <p id="forecastBalance" class="hero-amount">0,00 €</p>
+              <p id="forecastProjectionCaption" class="hero-caption">Après toutes les opérations prévues</p>
+            </div>
+            <button id="editBufferBtn" class="circle-button subtle-circle" type="button" aria-label="Modifier l’épargne de précaution"></button>
+          </div>
+
+          <div class="reserve-progress" aria-label="Progression vers l’objectif de réserve">
+            <div class="progress-track" aria-hidden="true"><i id="reserveProgress"></i></div>
+            <div class="reserve-progress-labels"><span id="reserveProgressCurrent">0 % de l’objectif</span><span id="reserveTargetLabel">Objectif 5 000 €</span></div>
+          </div>
+
+          <div id="forecastRisk" class="reserve-status" role="status"></div>
+
+          <div class="metric-grid three-columns reserve-metrics">
+            <div class="metric"><span>Solde actuel</span><strong id="reserveCurrent">0,00 €</strong></div>
+            <div class="metric"><span>Rentrées prévues</span><strong id="forecastIncome" class="financial-positive">0,00 €</strong></div>
+            <div class="metric"><span>Dépenses prévues</span><strong id="forecastPayments">0,00 €</strong></div>
           </div>
         </article>
 
-        <section class="period-panel" aria-label="Progression de la période">
-          <div class="section-heading compact-heading">
-            <div><p class="section-kicker">PÉRIODE</p><h2>Progression</h2></div>
-            <strong id="periodPercent">0 %</strong>
-          </div>
-          <div class="period-track" aria-hidden="true"><i id="periodProgress"></i></div>
-          <div class="period-labels"><span id="periodStartLabel">Début</span><span id="periodEndLabel">Fin</span></div>
-        </section>
-
-        <section class="content-section">
-          <div class="section-heading">
-            <div><p class="section-kicker">RÉPARTITION</p><h2>Catégories principales</h2></div>
-            <button class="text-action" type="button" data-nav="budget">Tout afficher</button>
-          </div>
-          <div id="summaryCategories" class="ios-list"></div>
-        </section>
-
-        <section class="content-section">
-          <div class="section-heading">
-            <div><p class="section-kicker">ÉCHÉANCES</p><h2>Prochainement</h2></div>
-            <button class="text-action" type="button" data-nav="future">Voir la chronologie</button>
-          </div>
-          <div id="summaryUpcoming" class="ios-list"></div>
-        </section>
-
-        <article class="forecast-card">
-          <div class="forecast-icon" id="summaryForecastIcon"></div>
-          <div class="forecast-copy">
-            <span>Solde estimé en fin de période</span>
-            <strong id="summaryForecast">0,00 €</strong>
-            <small id="summaryForecastDetail">Prévisions incluses</small>
-          </div>
+        <article id="reserveAdjustmentCard" class="reserve-adjustment">
+          <span id="reserveAdjustmentIcon" class="reserve-adjustment-icon" aria-hidden="true"></span>
+          <span class="reserve-adjustment-copy">
+            <small id="reserveAdjustmentLabel">À renflouer pour retrouver l’objectif</small>
+            <strong id="reserveAdjustmentAmount">0,00 €</strong>
+            <span id="reserveAdjustmentDetail">Projection calculée à partir des opérations actives</span>
+          </span>
         </article>
 
+        <section class="content-section budget-glance-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">BUDGETS COURANTS</p><h2>Montants restants</h2></div>
+          </div>
+          <div id="budgetGlance" class="ios-list"></div>
+        </section>
+
+        <section class="content-section timeline-section">
+          <div class="section-heading">
+            <div><p class="section-kicker">PRÉVISIONS</p><h2>Mouvements de la réserve</h2></div>
+            <button id="addFutureBtn" class="small-circle-button" type="button" aria-label="Ajouter une opération prévue"></button>
+          </div>
+          <div id="futureTimeline" class="timeline"></div>
+        </section>
+
+        <button id="toggleCompletedBtn" class="inline-disclosure" type="button" aria-label="Afficher les opérations terminées" hidden></button>
+        <div id="completedTimeline" class="timeline completed-timeline" hidden></div>
         <section class="data-status" data-status-card aria-live="polite"></section>
       </section>
 
@@ -117,32 +121,6 @@
         <section class="data-status" data-status-card aria-live="polite"></section>
       </section>
 
-      <section id="futureView" class="view" aria-labelledby="screenTitle">
-        <article class="hero-card future-hero">
-          <div class="future-hero-top">
-            <div><p class="card-label">Solde prévisionnel en fin de période</p><p id="forecastBalance" class="hero-amount medium">0,00 €</p></div>
-            <button id="editBufferBtn" class="circle-button subtle-circle" type="button" aria-label="Modifier la réserve"></button>
-          </div>
-          <div id="forecastRisk" class="risk-message" hidden></div>
-          <div class="metric-grid three-columns">
-            <div class="metric"><span>Encaissements</span><strong id="forecastIncome" class="financial-positive">0,00 €</strong></div>
-            <div class="metric"><span>Paiements</span><strong id="forecastPayments">0,00 €</strong></div>
-            <div class="metric"><span>Impact net</span><strong id="forecastNet">0,00 €</strong></div>
-          </div>
-        </article>
-
-        <section class="content-section timeline-section">
-          <div class="section-heading">
-            <div><p class="section-kicker">CHRONOLOGIE</p><h2>Opérations à venir</h2></div>
-            <button id="addFutureBtn" class="small-circle-button" type="button" aria-label="Ajouter une échéance"></button>
-          </div>
-          <div id="futureTimeline" class="timeline"></div>
-        </section>
-
-        <button id="toggleCompletedBtn" class="inline-disclosure" type="button" aria-label="Afficher les opérations terminées" hidden></button>
-        <div id="completedTimeline" class="timeline completed-timeline" hidden></div>
-        <section class="data-status" data-status-card aria-live="polite"></section>
-      </section>
 
       <section id="settingsView" class="view settings-view" aria-labelledby="screenTitle">
         <section class="settings-section">
@@ -154,7 +132,7 @@
             <button class="settings-row" type="button" data-action="spaces"><span class="settings-leading" data-icon="people"></span><span class="settings-copy"><strong>Espaces Personnel et Commun</strong><small id="spacesPreview">Personnel · Commun</small></span><span class="chevron-icon"></span></button>
             <button class="settings-row" type="button" data-action="recurring-income"><span class="settings-leading" data-icon="income"></span><span class="settings-copy"><strong>Revenus récurrents</strong><small id="recurringIncomePreview">0 revenu</small></span><span class="chevron-icon"></span></button>
             <button class="settings-row" type="button" data-action="recurring-expense"><span class="settings-leading" data-icon="repeat"></span><span class="settings-copy"><strong>Dépenses récurrentes</strong><small id="recurringExpensePreview">0 dépense</small></span><span class="chevron-icon"></span></button>
-            <button class="settings-row" type="button" data-action="forecasts"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Prévisions</strong><small id="forecastCountPreview">0 opération</small></span><span class="chevron-icon"></span></button>
+            <button class="settings-row" type="button" data-action="forecasts"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Épargne de précaution</strong><small id="forecastCountPreview">Objectif 5 000 €</small></span><span class="chevron-icon"></span></button>
           </div>
         </section>
 
@@ -189,7 +167,7 @@
             <label class="settings-row switch-row"><span class="settings-leading" data-icon="decimal"></span><span class="settings-copy"><strong>Afficher les centimes</strong><small>Conserve deux décimales dans les montants</small></span><input id="centsSwitch" class="ios-switch" type="checkbox"></label>
             <label class="settings-row select-row"><span class="settings-leading" data-icon="currency"></span><span class="settings-copy"><strong>Devise</strong><small>Devise utilisée dans toute l’application</small></span><select id="currencySelect" aria-label="Devise"><option value="EUR">EUR</option><option value="CHF">CHF</option><option value="GBP">GBP</option><option value="USD">USD</option></select></label>
             <label class="settings-row select-row"><span class="settings-leading" data-icon="numbers"></span><span class="settings-copy"><strong>Format des nombres</strong><small>Présentation des séparateurs</small></span><select id="numberLocaleSelect" aria-label="Format des nombres"><option value="fr-FR">1 234,56</option><option value="en-IE">1,234.56</option></select></label>
-            <label class="settings-row switch-row"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Inclure les opérations prévues</strong><small>Les ajoute au solde de fin de période</small></span><input id="forecastSwitch" class="ios-switch" type="checkbox"></label>
+            <label class="settings-row switch-row"><span class="settings-leading" data-icon="forecast"></span><span class="settings-copy"><strong>Inclure les opérations prévues</strong><small>Les ajoute au solde prévisionnel de la réserve</small></span><input id="forecastSwitch" class="ios-switch" type="checkbox"></label>
             <label class="settings-row switch-row"><span class="settings-leading" data-icon="motion"></span><span class="settings-copy"><strong>Réduction des animations</strong><small>Limite les transitions de l’interface</small></span><input id="motionSwitch" class="ios-switch" type="checkbox"></label>
           </div>
         </section>
@@ -205,7 +183,7 @@
         <section class="settings-section about-section">
           <h2>À propos</h2>
           <div class="settings-list">
-            <div class="about-mark"><div class="app-mark" aria-hidden="true"><span></span><span></span><span></span></div><div><strong>Budget</strong><small id="versionPreview">Version 3.0.0</small></div></div>
+            <div class="about-mark"><div class="app-mark" aria-hidden="true"><span></span><span></span><span></span></div><div><strong>Budget</strong><small id="versionPreview">Version 4.0.0</small></div></div>
             <div class="about-details"><p><span>Mode de stockage</span><strong>Local sur cet appareil</strong></p><p><span>Fonctionnement hors ligne</span><strong>Disponible</strong></p><p><span>Installation</span><strong>Application web progressive</strong></p></div>
           </div>
         </section>
@@ -213,9 +191,8 @@
     </main>
 
     <nav class="tabbar" aria-label="Navigation principale">
-      <button class="tab active" type="button" data-tab="summary"><span class="tab-icon" data-icon="summary"></span><small>Synthèse</small></button>
+      <button class="tab active" type="button" data-tab="future" aria-label="Épargne de précaution"><span class="tab-icon" data-icon="savings"></span><small>Précaution</small></button>
       <button class="tab" type="button" data-tab="budget"><span class="tab-icon" data-icon="budget"></span><small>Budget</small></button>
-      <button class="tab" type="button" data-tab="future"><span class="tab-icon" data-icon="calendar"></span><small>À venir</small></button>
       <button class="tab" type="button" data-tab="settings"><span class="tab-icon" data-icon="settings"></span><small>Réglages</small></button>
     </nav>
   </div>

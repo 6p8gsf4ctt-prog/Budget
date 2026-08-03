@@ -1,7 +1,7 @@
 {
   "name": "Budget",
   "short_name": "Budget",
-  "description": "Budget personnel et commun, prévisions et échéances, disponible hors ligne.",
+  "description": "Budget personnel et commun piloté par une épargne de précaution, disponible hors ligne.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

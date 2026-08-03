@@ -1,20 +1,19 @@
-# Budget — Version 3.0.0
+# Budget 4.0.0
 
-Application PWA locale de gestion budgétaire personnelle et commune.
+Application PWA locale pour piloter deux budgets courants et une épargne de précaution.
 
-## Navigation
+## Organisation
 
-- **Synthèse** : disponible, revenus, dépenses, progression, catégories, échéances et solde estimé.
-- **Budget** : contrôle segmenté Personnel / Commun, revenus, catégories, budgets prévus et dépenses réalisées.
-- **À venir** : chronologie des paiements et encaissements, avec projection de fin de période.
-- **Réglages** : budget, données, sauvegarde, affichage, stockage et informations PWA.
+- **Épargne de précaution** : écran d’entrée centré sur une réserve cible de 5 000 €, son solde actuel, toutes les dépenses et rentrées prévues, le solde prévisionnel et le montant à renflouer.
+- **Budget** : budgets Personnel et Commun conservés dans une structure commune, avec revenus, catégories, montants prévus, utilisés et restants.
+- **Réglages** : période, données, sauvegardes, affichage, stockage et informations PWA.
 
-## Stockage et compatibilité
+## Données
 
-Les données restent enregistrées dans la base IndexedDB `mon-budget-secure-db` et dans la clé miroir `mon-budget-data-v3`. Les anciennes clés `mon-budget-data-v2` et `mon-budget-data-v1` restent lisibles.
+Toutes les données restent sur l’appareil dans IndexedDB, avec une copie miroir locale et des instantanés de sécurité. Les clés de stockage des versions précédentes sont conservées. La migration vers la V4 ne modifie pas les revenus, dépenses, catégories, espaces ni opérations prévisionnelles existants.
 
-La migration vers la version 3 complète uniquement les champs manquants. Elle conserve les espaces, revenus, catégories, lignes de dépenses, prévisions et instantanés existants.
+Une réserve non configurée est initialisée à un solde et un objectif de 5 000 €. Une réserve déjà configurée conserve ses valeurs.
 
-## Sauvegardes
+## Sauvegarde
 
-Les exports utilisent le nom `Budget_YYYY-MM-DD_HH-mm.json` et un schéma explicite compatible avec les anciennes sauvegardes de l’application.
+L’export produit un fichier `Budget_YYYY-MM-DD_HH-mm.json`. L’import accepte les sauvegardes Budget actuelles ainsi que les anciens formats reconnus par l’application.

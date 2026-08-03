@@ -392,3 +392,94 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 .segmented-control button, .form-segment span { min-height: 44px; }
 html, body, .sheet-dialog { scrollbar-width: none; }
 html::-webkit-scrollbar, body::-webkit-scrollbar, .sheet-dialog::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* Budget 4 — écran principal centré sur l’épargne de précaution. */
+.reserve-hero > *:not(.hero-glow) { position: relative; }
+.reserve-hero .future-hero-top > div { min-width: 0; flex: 1; }
+.reserve-progress { margin-top: 23px; }
+.reserve-progress .progress-track { margin-top: 0; }
+.reserve-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 9px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.reserve-progress-labels span:last-child { text-align: right; }
+.reserve-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 17px;
+  padding: 12px 13px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent-light);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.reserve-status strong { flex: 0 0 auto; }
+.reserve-status span { color: var(--text-secondary); }
+.reserve-status.success { background: rgba(48,209,88,.11); color: var(--green); }
+.reserve-status.danger { background: rgba(255,69,58,.12); color: var(--red); }
+.reserve-status.success span, .reserve-status.danger span { color: var(--text-secondary); }
+.reserve-metrics { margin-top: 16px; }
+
+.reserve-adjustment {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+  border-radius: 19px;
+  background: var(--surface);
+}
+.reserve-adjustment-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.reserve-adjustment-icon svg { width: 23px; height: 23px; }
+.reserve-adjustment-copy { min-width: 0; flex: 1; }
+.reserve-adjustment-copy small,
+.reserve-adjustment-copy strong,
+.reserve-adjustment-copy span { display: block; }
+.reserve-adjustment-copy small { color: var(--text-secondary); font-size: 12px; }
+.reserve-adjustment-copy strong {
+  margin-top: 3px;
+  font-size: 25px;
+  line-height: 1.05;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+.reserve-adjustment-copy span { margin-top: 5px; color: var(--text-secondary); font-size: 12px; line-height: 1.35; }
+.reserve-adjustment.success .reserve-adjustment-icon { color: var(--green); background: rgba(48,209,88,.12); }
+.reserve-adjustment.success .reserve-adjustment-copy strong { color: var(--green); }
+.reserve-adjustment.danger .reserve-adjustment-icon { color: var(--red); background: rgba(255,69,58,.13); }
+.reserve-adjustment.danger .reserve-adjustment-copy strong { color: var(--red); }
+.reserve-adjustment.advisory .reserve-adjustment-copy strong { color: var(--accent-light); }
+
+.budget-glance-section { margin-top: 0; }
+.budget-glance-row .row-value { max-width: 36%; overflow: hidden; text-overflow: ellipsis; }
+.timeline-group h3:first-letter { text-transform: uppercase; }
+
+/* Trois destinations principales : la réserve est l’écran d’entrée. */
+.tabbar { grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 420px) {
+  .header-copy h1 { font-size: 31px; }
+  .reserve-status { display: block; }
+  .reserve-status span { display: block; margin-top: 3px; }
+  .reserve-progress-labels { gap: 8px; font-size: 11px; }
+  .reserve-adjustment { padding: 14px; }
+  .reserve-adjustment-copy strong { font-size: 22px; }
+}
